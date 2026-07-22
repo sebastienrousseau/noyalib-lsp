@@ -2,9 +2,10 @@
 name = "noyalib-lsp"
 version = "0.0.16"
 edition = "2024"
-# Transitive deps via the LSP transport stack (litemap 0.7.5,
-# uuid 1.23) require rustc 1.86+. The noyalib core lib still
-# compiles on 1.75; only the LSP server adopts the higher floor.
+# Lockstep floor with the noyalib core (1.86.0 as of v0.0.16).
+# Also required independently here: the LSP transport stack
+# (litemap 0.7.5, uuid 1.23) and the `validate-schema` feature
+# both need rustc 1.86+.
 rust-version = "1.86.0"
 license = "MIT OR Apache-2.0"
 description = "Language Server Protocol implementation for noyalib — YAML formatting, validation, and hover-driven JSON Schema descriptions"

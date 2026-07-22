@@ -52,8 +52,8 @@ top-level `noyalib` package on every channel (Homebrew, AUR,
 Scoop, Nix, GHCR).
 
 **MSRV: Rust 1.86.0.** The transitive LSP transport stack
-(`litemap`, `uuid`) requires recent stables; the noyalib core
-library itself stays at 1.75.
+(`litemap`, `uuid`) requires recent stables. The whole lockstep
+set, including the noyalib core library, shares this floor.
 
 ---
 
