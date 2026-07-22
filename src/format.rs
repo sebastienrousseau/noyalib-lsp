@@ -23,7 +23,13 @@ use serde_json::{Value as JsonValue, json};
 /// - The input fails to parse as YAML (the formatter has nothing
 ///   to emit until the document is syntactically valid).
 pub fn full_document_edits(text: &str) -> noyalib::Result<Vec<JsonValue>> {
-    let formatted = noyalib::cst::parse_document(text)?.to_string();
+    // Must be `cst::format`, not `parse_document(..).to_string()`: the
+    // CST round-trip is byte-faithful by design, so the latter always
+    // compares equal to the input and this function would return an
+    // empty edit list for every document — i.e. `textDocument/formatting`
+    // would silently do nothing. `cst::format` is the call that actually
+    // normalises whitespace while preserving comments.
+    let formatted = noyalib::cst::format(text)?;
     if formatted == text {
         return Ok(Vec::new());
     }
@@ -68,17 +74,53 @@ mod tests {
     }
 
     #[test]
-    fn well_formed_input_produces_text_edit_array() {
-        // Drive a path where the formatter is an identity transform
-        // — on identity the response is empty. The shape of the
-        // edit object is exercised separately in the integration
-        // tests under `tests/` where a non-canonical input will
-        // produce a non-empty edit.
+    fn identity_input_produces_no_edits() {
         let edits = full_document_edits("simple: yaml\n").unwrap();
-        for e in &edits {
-            assert!(e["range"]["start"]["line"].is_u64());
-            assert!(e["range"]["end"]["line"].is_u64());
-            assert!(e["newText"].is_string());
-        }
+        assert!(edits.is_empty());
+    }
+
+    /// The edit-construction path. Previously unreachable: the
+    /// implementation round-tripped the CST (byte-faithful), so
+    /// `formatted == text` always held and this branch never ran.
+    #[test]
+    fn non_canonical_input_produces_one_full_range_edit() {
+        let edits = full_document_edits("a:    1\nb:    2\n").unwrap();
+        assert_eq!(edits.len(), 1, "expected a single whole-document edit");
+        let e = &edits[0];
+        assert_eq!(e["range"]["start"]["line"], 0);
+        assert_eq!(e["range"]["start"]["character"], 0);
+        assert!(e["range"]["end"]["line"].is_u64());
+        assert!(e["range"]["end"]["character"].is_u64());
+        assert_eq!(e["newText"], "a: 1\nb: 2\n");
+    }
+
+    #[test]
+    fn end_position_for_trailing_newline_input() {
+        let edits = full_document_edits("a:    1\nb:    2\n").unwrap();
+        // Two lines, trailing newline: end line is the last content
+        // line (zero-based), not the phantom line after it.
+        assert_eq!(edits[0]["range"]["end"]["line"], 1);
+    }
+
+    /// Without a trailing newline the end line is a *sentinel* one past
+    /// the last content line (`count(0).max(1)` with no newline to
+    /// subtract). That is deliberate — the header comment notes the
+    /// range intentionally over-reaches and the LSP spec lets the client
+    /// clamp to the real document end. Asserted here so the behaviour is
+    /// pinned rather than accidental.
+    #[test]
+    fn end_position_for_input_without_trailing_newline() {
+        let edits = full_document_edits("a:    1").unwrap();
+        assert_eq!(edits.len(), 1);
+        assert_eq!(edits[0]["range"]["end"]["line"], 1);
+        // End character is the length of the last line of the *input*.
+        assert_eq!(edits[0]["range"]["end"]["character"], "a:    1".len());
+    }
+
+    #[test]
+    fn multi_line_nested_input_produces_edit() {
+        let edits = full_document_edits("a:\n  - 1\n  -   2\n").unwrap();
+        assert_eq!(edits.len(), 1);
+        assert_eq!(edits[0]["newText"], "a:\n  - 1\n  - 2\n");
     }
 }

@@ -2,33 +2,48 @@
 // Copyright (c) 2026 Noyalib. All rights reserved.
 
 //! Coverage for `full_document_edits` in `noyalib-lsp::format`.
-//! The existing in-source tests cover only canonical inputs, so the
-//! TextEdit-building code path (lines 35-49) was unreachable. This
-//! file drives non-canonical input through the function so the LSP
-//! formatting response is exercised end-to-end.
+//!
+//! Historical note: the edit-building path used to be unreachable
+//! because the implementation round-tripped the CST
+//! (`parse_document(..).to_string()`), which is byte-faithful by
+//! design — so `formatted == text` always held and the server returned
+//! an empty edit list for every document. That made
+//! `textDocument/formatting` a silent no-op. The implementation now
+//! calls `cst::format`, and these tests assert that non-canonical input
+//! actually produces an edit.
 
 use noyalib_lsp::format::full_document_edits;
 
+/// Already-canonical input is a genuine no-op: nothing to change, so
+/// the server returns an empty edit list and the editor skips it.
 #[test]
-fn round_trip_canonical_inputs_return_empty() {
-    // The CST formatter (`Document::to_string`) is byte-faithful by
-    // design: it preserves the source's whitespace and quoting
-    // exactly. As a result, `formatted == text` for every parseable
-    // input, and `full_document_edits` returns an empty Vec. The
-    // edit-building code at lines 35-49 is reachable today only
-    // via custom format-with-config wrappers, not the default
-    // path. This test pins that round-trip-empty contract.
-    for input in [
-        "a: 1\nb: 2\n",
-        "a:    1\nb:  2\n",
-        "key:\n  - one\n  - two\n",
-        "{a: 1, b: 2}\n",
-    ] {
+fn canonical_inputs_return_empty() {
+    for input in ["a: 1\nb: 2\n", "key:\n  - one\n  - two\n", "{a: 1, b: 2}\n"] {
         let edits = full_document_edits(input).expect("parse + format");
         assert!(
             edits.is_empty(),
-            "byte-faithful CST → no edit for {input:?}"
+            "canonical input should need no edit: {input:?}"
         );
+    }
+}
+
+/// Non-canonical input must produce exactly one whole-document edit
+/// whose `newText` is the normalised source. This is the regression
+/// guard for the silent-no-op bug described in the module header.
+#[test]
+fn non_canonical_inputs_produce_an_edit() {
+    for (input, expected) in [
+        ("a:    1\nb:  2\n", "a: 1\nb: 2\n"),
+        ("key:\n  - one\n  -   two\n", "key:\n  - one\n  - two\n"),
+    ] {
+        let edits = full_document_edits(input).expect("parse + format");
+        assert_eq!(edits.len(), 1, "expected one edit for {input:?}");
+        assert_eq!(
+            edits[0]["newText"], expected,
+            "unexpected formatted text for {input:?}"
+        );
+        assert_eq!(edits[0]["range"]["start"]["line"], 0);
+        assert_eq!(edits[0]["range"]["start"]["character"], 0);
     }
 }
 
