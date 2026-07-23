@@ -43,10 +43,11 @@ fix**: document formatting never actually worked.
 
 ### Changed
 
-- **MSRV 1.85.0 → 1.86.0**, matching the `noyalib` core floor. The
-  `validate-schema` feature this crate consumes requires 1.86 via the
-  `jsonschema` → ICU 2.x chain, so the previously declared 1.85 was not
-  actually buildable here.
+- **MSRV 1.85.0 → 1.86.0**, matching the `noyalib` core floor. This is a
+  **deliberate policy choice**, not a dependency requirement — this crate
+  still compiles on 1.85. The floor is raised so the whole lockstep set
+  states one number, with headroom against a future transitive bump. If
+  you are pinned to 1.85, v0.0.15 remains available.
 - `noyalib` dependency pin `=0.0.15` → `=0.0.16`.
 
 ### Internal

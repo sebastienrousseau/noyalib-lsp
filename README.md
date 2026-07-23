@@ -51,9 +51,10 @@ for distro-package paths — `noyalib-lsp` is bundled into the
 top-level `noyalib` package on every channel (Homebrew, AUR,
 Scoop, Nix, GHCR).
 
-**MSRV: Rust 1.86.0.** The transitive LSP transport stack
-(`litemap`, `uuid`) requires recent stables. The whole lockstep
-set, including the noyalib core library, shares this floor.
+**MSRV: Rust 1.86.0** — a deliberate policy choice: one floor across the whole lockstep set,
+with headroom for the dependency tree. No current dependency *requires*
+1.86 — this crate still compiles on 1.85. The whole lockstep set,
+including the noyalib core library, shares this floor.
 
 ---
 
