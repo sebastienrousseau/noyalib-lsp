@@ -10,9 +10,10 @@
 
 #![allow(missing_docs)]
 
-use serde_json::{Value, json};
 use std::io::{Read, Write};
 use std::process::{Command, Stdio};
+
+use serde_json::{Value, json};
 
 fn bin() -> &'static str {
     env!("CARGO_BIN_EXE_noyalib-lsp")

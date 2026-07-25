@@ -94,21 +94,20 @@
 //!
 //! # Documentation
 //!
-//! - **Engineering policies** — workspace
-//!   [`POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/doc/POLICIES.md).
+//! - **Engineering policies** — workspace [`POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/doc/POLICIES.md).
 //! - **LSP specification**: <https://microsoft.github.io/language-server-protocol/>.
 //! - **Editor configurations** (VS Code / Neovim / Helix /
 //!   Emacs / Zed / Sublime / IntelliJ):
 //!   [`examples/`](https://github.com/sebastienrousseau/noyalib/tree/main/crates/noyalib-lsp/examples).
-//! - **Protocol-method coverage matrix**:
-//!   [`doc/protocol-coverage.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/protocol-coverage.md).
+//! - **Protocol-method coverage matrix**: [`doc/protocol-coverage.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/protocol-coverage.md).
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 use serde_json::{Value as JsonValue, json};
-use std::collections::HashMap;
 
 pub mod diagnostics;
 pub mod format;

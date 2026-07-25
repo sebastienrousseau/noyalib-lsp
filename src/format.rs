@@ -20,8 +20,8 @@ use serde_json::{Value as JsonValue, json};
 ///
 /// # Errors
 ///
-/// - The input fails to parse as YAML (the formatter has nothing
-///   to emit until the document is syntactically valid).
+/// - The input fails to parse as YAML (the formatter has nothing to emit until
+///   the document is syntactically valid).
 pub fn full_document_edits(text: &str) -> noyalib::Result<Vec<JsonValue>> {
     // Use `cst::format` (the normalizing formatter), NOT
     // `parse_document(text).to_string()`: the latter is a byte-faithful
