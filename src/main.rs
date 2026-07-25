@@ -55,16 +55,16 @@ fn main() -> ExitCode {
             "--version" | "-V" => {
                 println!("noyalib-lsp {}", env!("CARGO_PKG_VERSION"));
                 return ExitCode::SUCCESS;
-            },
+            }
             "--help" | "-h" => {
                 print!("{HELP}");
                 return ExitCode::SUCCESS;
-            },
+            }
             other => {
                 eprintln!("noyalib-lsp: unknown argument `{other}`");
                 eprintln!("Run `noyalib-lsp --help` for usage.");
                 return ExitCode::from(2);
-            },
+            }
         }
     }
     match run() {
@@ -72,7 +72,7 @@ fn main() -> ExitCode {
         Err(e) => {
             eprintln!("noyalib-lsp: {e}");
             ExitCode::from(3)
-        },
+        }
     }
 }
 

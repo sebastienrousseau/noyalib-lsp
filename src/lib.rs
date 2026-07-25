@@ -319,7 +319,7 @@ impl Server {
                     -32700,
                     format!("parse error: {e}"),
                 ));
-            },
+            }
         };
         if req.jsonrpc != "2.0" {
             return HandleOutcome::reply(error_str(
@@ -335,10 +335,10 @@ impl Server {
         match (id, result) {
             (None, Ok(side)) => {
                 outcome.notifications = side.notifications;
-            },
+            }
             (None, Err(_)) => {
                 // Notifications swallow errors per JSON-RPC.
-            },
+            }
             (Some(id), Ok(side)) => {
                 outcome.reply = Some(
                     serde_json::to_string(&Response {
@@ -349,10 +349,10 @@ impl Server {
                     .expect("infallible serialise"),
                 );
                 outcome.notifications = side.notifications;
-            },
+            }
             (Some(id), Err((code, msg))) => {
                 outcome.reply = Some(error_str(id, code, msg));
-            },
+            }
         }
         outcome
     }
@@ -375,12 +375,12 @@ impl Server {
                         "version": env!("CARGO_PKG_VERSION"),
                     }
                 })))
-            },
+            }
             "initialized" => Ok(DispatchOk::value(JsonValue::Null)),
             "shutdown" => {
                 self.shutting_down = true;
                 Ok(DispatchOk::value(JsonValue::Null))
-            },
+            }
             "exit" => Ok(DispatchOk::value(JsonValue::Null)),
             "textDocument/didOpen" => self.did_open(params),
             "textDocument/didChange" => self.did_change(params),
