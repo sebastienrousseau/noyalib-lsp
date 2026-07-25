@@ -33,3 +33,21 @@ jobs:
     uses: sebastienrousseau/noyalib/.github/workflows/shared-verify-signatures.yml@bbf0b9ca4930398a4984c78deccb91002c15d13b
   test-matrix:
     uses: sebastienrousseau/noyalib/.github/workflows/shared-test-matrix.yml@bbf0b9ca4930398a4984c78deccb91002c15d13b
+
+  # ── A+ rigor parity with the core ──────────────────────────────────
+  coverage-gate:
+    # lsp measures 95.5%/97.3%/95.5% (regions/functions/lines),
+    # clearing the core's 93/96/94 floor — including main.rs (the stdio
+    # loop), so no honest-exclusion regex is needed.
+    uses: sebastienrousseau/noyalib/.github/workflows/shared-coverage.yml@00ee7b90ca45138ad331387dae0d846799b8ab91
+    with:
+      ignore-filename-regex: ''
+      fail-under-functions: 96
+      fail-under-lines: 94
+      fail-under-regions: 93
+
+  msrv-core:
+    # Verifies the declared 1.86.0 floor actually builds.
+    uses: sebastienrousseau/noyalib/.github/workflows/shared-msrv-core.yml@00ee7b90ca45138ad331387dae0d846799b8ab91
+    with:
+      toolchain: "1.86.0"
