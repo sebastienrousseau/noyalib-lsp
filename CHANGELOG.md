@@ -43,11 +43,13 @@ fix**: document formatting never actually worked.
 
 ### Changed
 
-- **MSRV 1.85.0 → 1.86.0**, matching the `noyalib` core floor. This is a
-  **deliberate policy choice**, not a dependency requirement — this crate
-  still compiles on 1.85. The floor is raised so the whole lockstep set
-  states one number, with headroom against a future transitive bump. If
-  you are pinned to 1.85, v0.0.15 remains available.
+- **MSRV 1.85.0 → 1.86.0**, matching the `noyalib` core floor. This is the
+  lowest toolchain the crate can be **built and tested** on: `criterion
+  0.8` (the benchmark dev-dependency) declares `rust-version = 1.86`, so
+  `cargo check --all-targets` and the bench suite fail on 1.85
+  (`criterion@0.8.2 requires rustc 1.86`), though `cargo check --lib`
+  still builds. We publish the number we verify. If you consume only the
+  library on 1.85, v0.0.15 remains available.
 - `noyalib` dependency pin `=0.0.15` → `=0.0.16`.
 
 ### Internal

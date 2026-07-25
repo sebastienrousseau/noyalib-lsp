@@ -51,10 +51,13 @@ for distro-package paths — `noyalib-lsp` is bundled into the
 top-level `noyalib` package on every channel (Homebrew, AUR,
 Scoop, Nix, GHCR).
 
-**MSRV: Rust 1.86.0** — a deliberate policy choice: one floor across the whole lockstep set,
-with headroom for the dependency tree. No current dependency *requires*
-1.86 — this crate still compiles on 1.85. The whole lockstep set,
-including the noyalib core library, shares this floor.
+**MSRV: Rust 1.86.0** — the lowest toolchain this crate can be
+**built and tested** on, matching the noyalib core floor.
+`criterion 0.8` (the benchmark dev-dependency) declares
+`rust-version = 1.86`, so `cargo check --all-targets` and the
+bench suite fail on 1.85 (`criterion@0.8.2 requires rustc 1.86`),
+though `cargo check --lib` still builds. We publish the number we
+verify.
 
 ---
 
