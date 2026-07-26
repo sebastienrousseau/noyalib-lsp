@@ -12,9 +12,10 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
-use noyalib_lsp::Server;
 use std::io::{self, Read, Write};
 use std::process::ExitCode;
+
+use noyalib_lsp::Server;
 
 const HELP: &str = "\
 noyalib-lsp — Language Server Protocol implementation for noyalib.
