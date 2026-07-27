@@ -51,9 +51,13 @@ for distro-package paths — `noyalib-lsp` is bundled into the
 top-level `noyalib` package on every channel (Homebrew, AUR,
 Scoop, Nix, GHCR).
 
-**MSRV: Rust 1.85.0.** The transitive LSP transport stack
-(`litemap`, `uuid`) requires recent stables; the noyalib core
-library itself stays at 1.75.
+**MSRV: Rust 1.86.0** — the lowest toolchain this crate can be
+**built and tested** on, matching the noyalib core floor.
+`criterion 0.8` (the benchmark dev-dependency) declares
+`rust-version = 1.86`, so `cargo check --all-targets` and the
+bench suite fail on 1.85 (`criterion@0.8.2 requires rustc 1.86`),
+though `cargo check --lib` still builds. We publish the number we
+verify.
 
 ---
 
