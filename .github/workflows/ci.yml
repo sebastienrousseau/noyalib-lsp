@@ -39,7 +39,7 @@ jobs:
     # lsp measures 95.5%/97.3%/95.5% (regions/functions/lines),
     # clearing the core's 93/96/94 floor — including main.rs (the stdio
     # loop), so no honest-exclusion regex is needed.
-    uses: sebastienrousseau/noyalib/.github/workflows/shared-coverage.yml@c98a9451a7349913f83668d83c0149443e6f1216
+    uses: sebastienrousseau/noyalib/.github/workflows/shared-coverage.yml@76235c1a4306a2bbee8ece3c1147a9245da91abf
     with:
       ignore-filename-regex: ''
       fail-under-functions: 96
