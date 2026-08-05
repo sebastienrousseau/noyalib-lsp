@@ -28,7 +28,7 @@ jobs:
   reuse-lint:
     uses: sebastienrousseau/noyalib/.github/workflows/shared-reuse.yml@bbf0b9ca4930398a4984c78deccb91002c15d13b
   docs-strict:
-    uses: sebastienrousseau/noyalib/.github/workflows/shared-rustdoc-strict.yml@c98a9451a7349913f83668d83c0149443e6f1216
+    uses: sebastienrousseau/noyalib/.github/workflows/shared-rustdoc-strict.yml@76235c1a4306a2bbee8ece3c1147a9245da91abf
   verify-signatures:
     uses: sebastienrousseau/noyalib/.github/workflows/shared-verify-signatures.yml@bbf0b9ca4930398a4984c78deccb91002c15d13b
   test-matrix:
@@ -39,7 +39,7 @@ jobs:
     # lsp measures 95.5%/97.3%/95.5% (regions/functions/lines),
     # clearing the core's 93/96/94 floor — including main.rs (the stdio
     # loop), so no honest-exclusion regex is needed.
-    uses: sebastienrousseau/noyalib/.github/workflows/shared-coverage.yml@c98a9451a7349913f83668d83c0149443e6f1216
+    uses: sebastienrousseau/noyalib/.github/workflows/shared-coverage.yml@76235c1a4306a2bbee8ece3c1147a9245da91abf
     with:
       ignore-filename-regex: ''
       fail-under-functions: 96
@@ -48,6 +48,6 @@ jobs:
 
   msrv-core:
     # Verifies the declared 1.86.0 floor actually builds.
-    uses: sebastienrousseau/noyalib/.github/workflows/shared-msrv-core.yml@00ee7b90ca45138ad331387dae0d846799b8ab91
+    uses: sebastienrousseau/noyalib/.github/workflows/shared-msrv-core.yml@76235c1a4306a2bbee8ece3c1147a9245da91abf
     with:
       toolchain: "1.86.0"
