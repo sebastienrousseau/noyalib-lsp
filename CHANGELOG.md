@@ -13,7 +13,36 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
 
 ## [Unreleased]
 
-(Nothing yet — `[v0.0.16]` is the cut.)
+## [v0.0.22] - 2026-08-13
+
+Lockstep release with `noyalib` 0.0.22. No behaviour change in this
+crate — see the core's `CHANGELOG.md` for what 0.0.22 carries (CRLF-aware
+CST splices, #261).
+
+**On the version jump.** The published sequence for this crate goes
+`0.0.18 → 0.0.22`. `0.0.19` was prepared on a release branch but never
+tagged or published; `0.0.20` and `0.0.21` were core-only releases that
+the satellites did not follow. Lockstep resumes here.
+
+### Changed
+
+- `noyalib` dependency pin `=0.0.18` → `=0.0.22`, with the matching
+  `cargo-vet` exemption moved alongside it.
+- Crate version → 0.0.22.
+
+### Security
+
+- Dropped the stale `RUSTSEC-2026-0173` ignore from `deny.toml`.
+  `cargo-deny` reported it as `advisory-not-detected`: `proc-macro-error2`
+  is not in this crate's graph on any platform, because it reaches
+  `noyalib` only through the optional `validator` feature, which this
+  crate does not enable. A stale ignore is not inert — it would have
+  silently swallowed the advisory if a `validator`-enabled path were added
+  later.
+
+> **Undocumented gap.** `v0.0.17` and `v0.0.18` were released without
+> entries here. Their contents are covered by the core's release notes for
+> those versions.
 
 ## [v0.0.16] - 2026-07-22
 
