@@ -266,14 +266,14 @@ range that changed, not the buffer size.
 ## Documentation
 
 - **Engineering policies** (MSRV, SemVer, security, performance, concurrency, platform support, feature flags):
-  [`doc/POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/doc/POLICIES.md)
+  [`docs/POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/docs/POLICIES.md)
 - **Security policy**:
   [`SECURITY.md`](https://github.com/sebastienrousseau/noyalib/blob/main/SECURITY.md)
 - **API reference**: <https://docs.rs/noyalib-lsp>
 - **Editor setup (VS Code, Neovim, Emacs, Helix, Zed, Sublime)**:
-  [`doc/editor-setup.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/editor-setup.md)
+  [`docs/editor-setup.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/editor-setup.md)
 - **Protocol coverage (which LSP methods are implemented)**:
-  [`doc/protocol-coverage.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/protocol-coverage.md)
+  [`docs/protocol-coverage.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/protocol-coverage.md)
 - **Workspace README**:
   <https://github.com/sebastienrousseau/noyalib#readme>
 - **LSP specification**:

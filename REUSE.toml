@@ -30,7 +30,7 @@ SPDX-FileCopyrightText = "2026 Noyalib"
 SPDX-License-Identifier = "MIT OR Apache-2.0"
 
 [[annotations]]
-path = ["README.md", "CHANGELOG.md", "SECURITY.md", "doc/**"]
+path = ["README.md", "CHANGELOG.md", "SECURITY.md", "docs/**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Noyalib"
 SPDX-License-Identifier = "MIT OR Apache-2.0"
@@ -73,6 +73,13 @@ path = [
     "fuzz/Cargo.lock",
     "fuzz/corpus/**",
 ]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Noyalib"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# ── Family layout files (Phase 1, docs/ECOSYSTEM.md in the core) ──
+[[annotations]]
+path = ["DEVELOPMENT.md", ".editorconfig", ".markdownlint.yaml", ".codespellrc"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Noyalib"
 SPDX-License-Identifier = "MIT OR Apache-2.0"

@@ -28,7 +28,7 @@
 //! at 1.85; the core `noyalib` library still builds on **1.75**.
 //! CI verifies both floors via the `Per-crate MSRV` workflow
 //! job. See workspace
-//! [`POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/doc/POLICIES.md#1-msrv-minimum-supported-rust-version).
+//! [`POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/docs/POLICIES.md#1-msrv-minimum-supported-rust-version).
 //!
 //! # Panics
 //!
@@ -89,17 +89,17 @@
 //! (e.g. 0.0.x → 0.1.0). The Rust library surface (`Server`,
 //! `HandleOutcome`, `Request`, `Response`, `ErrorResponse`) is
 //! covered by the workspace SemVer policy in
-//! [`POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/doc/POLICIES.md#2-semver--api-stability).
+//! [`POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/docs/POLICIES.md#2-semver--api-stability).
 //! `cargo-semver-checks` runs in CI on every PR.
 //!
 //! # Documentation
 //!
-//! - **Engineering policies** — workspace [`POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/doc/POLICIES.md).
+//! - **Engineering policies** — workspace [`POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/docs/POLICIES.md).
 //! - **LSP specification**: <https://microsoft.github.io/language-server-protocol/>.
 //! - **Editor configurations** (VS Code / Neovim / Helix /
 //!   Emacs / Zed / Sublime / IntelliJ):
 //!   [`examples/`](https://github.com/sebastienrousseau/noyalib/tree/main/crates/noyalib-lsp/examples).
-//! - **Protocol-method coverage matrix**: [`doc/protocol-coverage.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/protocol-coverage.md).
+//! - **Protocol-method coverage matrix**: [`docs/protocol-coverage.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/protocol-coverage.md).
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]

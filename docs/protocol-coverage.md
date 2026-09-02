@@ -124,7 +124,7 @@ what to send back.
 | `crates/noyalib-lsp/benches/lsp_handlers.rs` | Per-handler latency on small + Kubernetes-shaped inputs |
 
 The full pyramid is documented in
-[`doc/TESTING.md`](../../../doc/TESTING.md).
+[`docs/TESTING.md`](../../../docs/TESTING.md).
 
 ## Related
 
