@@ -13,11 +13,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/sebastienrousseau/noyalib/actions"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/noyalib/ci.yml?style=for-the-badge&logo=github" alt="Build" /></a>
+  <a href="https://github.com/sebastienrousseau/noyalib-lsp/actions"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/noyalib-lsp/ci.yml?style=for-the-badge&logo=github" alt="Build" /></a>
   <a href="https://crates.io/crates/noyalib-lsp"><img src="https://img.shields.io/crates/v/noyalib-lsp.svg?style=for-the-badge&color=fc8d62&logo=rust" alt="Crates.io" /></a>
   <a href="https://docs.rs/noyalib-lsp"><img src="https://img.shields.io/badge/docs.rs-noyalib--lsp-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" alt="Docs.rs" /></a>
   <a href="https://lib.rs/crates/noyalib-lsp"><img src="https://img.shields.io/badge/lib.rs-noyalib-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
-  <a href="https://scorecard.dev/viewer/?uri=github.com/sebastienrousseau/noyalib"><img src="https://img.shields.io/ossf-scorecard/github.com/sebastienrousseau/noyalib?style=for-the-badge&label=OpenSSF%20Scorecard&logo=openssf" alt="OpenSSF Scorecard" /></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/sebastienrousseau/noyalib-lsp"><img src="https://img.shields.io/ossf-scorecard/github.com/sebastienrousseau/noyalib-lsp?style=for-the-badge&label=OpenSSF%20Scorecard&logo=openssf" alt="OpenSSF Scorecard" /></a>
 </p>
 
 ---
@@ -43,13 +43,9 @@
 cargo install noyalib-lsp
 ```
 
-Pre-built binaries for every target the workspace ships are
-attached to each GitHub Release; each is signed with cosign
-keyless. See the
-[install matrix in the workspace README](https://github.com/sebastienrousseau/noyalib#install)
-for distro-package paths — `noyalib-lsp` is bundled into the
-top-level `noyalib` package on every channel (Homebrew, AUR,
-Scoop, Nix, GHCR).
+Releases ship the crate archive with a CycloneDX SBOM and
+sigstore bundles. Pre-built binary tarballs and distro packages
+are not published yet; `cargo install` is the supported path.
 
 **MSRV: Rust 1.86.0** — the lowest toolchain this crate can be
 **built and tested** on, matching the noyalib core floor.
@@ -265,15 +261,22 @@ range that changed, not the buffer size.
 
 ## Documentation
 
+The four entry points, identical across every repo in the family:
+
+- **[User Manual](https://sebastienrousseau.github.io/noyalib/manual/)** — the rendered book: user guide, migrations, architecture, policies, ADRs
+- **[API reference](https://docs.rs/noyalib-lsp)** — rustdoc on docs.rs
+- **[Developer docs](DEVELOPMENT.md)** — this repo's dev entry point, pointing at the family guide
+- **[Ecosystem map](https://github.com/sebastienrousseau/noyalib/blob/main/docs/ECOSYSTEM.md)** — the six crates, the lockstep model, the scorecard
+
 - **Engineering policies** (MSRV, SemVer, security, performance, concurrency, platform support, feature flags):
-  [`doc/POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/doc/POLICIES.md)
+  [`docs/POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/docs/POLICIES.md)
 - **Security policy**:
   [`SECURITY.md`](https://github.com/sebastienrousseau/noyalib/blob/main/SECURITY.md)
 - **API reference**: <https://docs.rs/noyalib-lsp>
 - **Editor setup (VS Code, Neovim, Emacs, Helix, Zed, Sublime)**:
-  [`doc/editor-setup.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/editor-setup.md)
+  [`docs/editor-setup.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/editor-setup.md)
 - **Protocol coverage (which LSP methods are implemented)**:
-  [`doc/protocol-coverage.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/protocol-coverage.md)
+  [`docs/protocol-coverage.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/protocol-coverage.md)
 - **Workspace README**:
   <https://github.com/sebastienrousseau/noyalib#readme>
 - **LSP specification**:

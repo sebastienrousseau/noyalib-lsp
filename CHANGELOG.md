@@ -13,6 +13,14 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
 
 ## [Unreleased]
 
+### Changed
+
+- **Repository layout, Phase 1 of the family structure plan**:
+  `doc/` renamed to `docs/`, `DEVELOPMENT.md` added as the developer
+  entry point, `.editorconfig` / `.markdownlint.yaml` /
+  `.codespellrc` land with a per-push `docs-lint` CI gate consuming
+  the core repo's shared-docs-lint.yml.
+
 ## [v0.0.30] - 2026-09-02
 
 ### Changed
