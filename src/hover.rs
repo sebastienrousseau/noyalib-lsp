@@ -24,12 +24,19 @@ pub fn hover_at(text: &str, line: usize, column: usize) -> JsonValue {
     if byte_offset_of(text, line, column).is_none() {
         return JsonValue::Null;
     }
-    let body = match noyalib::from_str::<noyalib::Value>(text) {
-        Ok(v) => format!(
+    let body = match noyalib::load_all_as::<noyalib::Value>(text) {
+        Ok(docs) if docs.len() > 1 => format!(
+            "**Position**: line {}, column {}\n\n**Documents**: {}\n\n**First document type**: `{}`",
+            line + 1,
+            column + 1,
+            docs.len(),
+            type_name(&docs[0]),
+        ),
+        Ok(docs) => format!(
             "**Position**: line {}, column {}\n\n**Document type**: `{}`",
             line + 1,
             column + 1,
-            type_name(&v),
+            docs.first().map_or("null", type_name),
         ),
         Err(e) => format!("**Parse error**\n\n```\n{e}\n```"),
     };
@@ -83,6 +90,17 @@ fn type_name(v: &noyalib::Value) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn hover_describes_a_multi_document_stream() {
+        let v = hover_at("a: 1\n---\n- x\n", 0, 0);
+        let body = v["contents"]["value"].as_str().unwrap();
+        assert!(body.contains("**Documents**: 2"), "{body}");
+        assert!(
+            body.contains("**First document type**: `mapping`"),
+            "{body}"
+        );
+    }
 
     #[test]
     fn hover_returns_null_for_out_of_range_position() {
