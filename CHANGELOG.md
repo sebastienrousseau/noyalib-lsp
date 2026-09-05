@@ -22,6 +22,15 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
   `arbitrary` feature, and an unterminated-verbatim-tag parser fix
   (core #396). No local code change unless listed below.
 
+### Fixed
+
+- Diagnostics and hover parse the buffer as a stream (`load_all_as`),
+  so a valid multi-document file (`---`-separated) no longer receives
+  a false "more than one document is not supported" error. Found by
+  running the yaml-test-suite through the server: 19 valid stream
+  cases were flagged. Hover on a stream reports the document count
+  and the first document's type.
+
 ## [v0.0.33] - 2026-09-05
 
 ### Changed

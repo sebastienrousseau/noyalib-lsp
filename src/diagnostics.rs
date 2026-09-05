@@ -40,7 +40,10 @@ pub fn publish_diagnostics(uri: &str, text: &str) -> Option<String> {
 #[must_use]
 pub fn collect(text: &str) -> Vec<JsonValue> {
     let mut diagnostics = Vec::new();
-    if let Err(err) = noyalib::from_str::<noyalib::Value>(text) {
+    // A buffer may hold a whole stream (`---`-separated documents);
+    // `load_all_as` accepts every document count, so a valid
+    // multi-document file never produces a false parse error.
+    if let Err(err) = noyalib::load_all_as::<noyalib::Value>(text) {
         let (line, character) = location_from_error(&err, text);
         diagnostics.push(json!({
             "range": {
@@ -68,6 +71,21 @@ fn location_from_error(_err: &noyalib::Error, _text: &str) -> (usize, usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn collect_accepts_a_multi_document_stream() {
+        // yaml-test-suite 35KP and friends: a `---`-separated stream
+        // is valid YAML and must not raise a false parse error.
+        assert!(collect("--- a\n--- b\n...\n").is_empty());
+        assert!(collect("%YAML 1.2\n---\nk: v\n---\n- 1\n").is_empty());
+    }
+
+    #[test]
+    fn collect_reports_an_error_in_any_document_of_a_stream() {
+        let d = collect("k: v\n---\nk: [\n");
+        assert_eq!(d.len(), 1);
+        assert_eq!(d[0]["severity"].as_i64(), Some(1));
+    }
 
     #[test]
     fn collect_returns_empty_on_valid_yaml() {
