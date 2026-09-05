@@ -25,6 +25,7 @@
 ## Contents
 
 - [Install](#install) — Cargo, distro packages
+- [Requirements](#requirements) — toolchain floor, platforms, the core pin
 - [Quick Start](#quick-start) — smoke test
 - [Why this approach?](#why-this-approach) — design rationale
 - [Surface](#surface) — LSP methods supported
@@ -56,6 +57,19 @@ though `cargo check --lib` still builds. We publish the number we
 verify.
 
 ---
+
+## Requirements
+
+- **Rust 1.86.0 or newer** to build from source: `rust-version` in
+  the manifest, enforced by the `msrv-core` CI job on every push.
+- **Any tier-1 platform.** CI runs the tests on Linux, macOS, and
+  Windows with the stable, beta, and nightly toolchains; stable is the
+  gate, beta and nightly are early warning.
+- **The matching core.** This crate pins `noyalib` at the identical
+  `=0.0.X` and releases in lockstep with it; Cargo resolves that pin
+  for you.
+- **An LSP client** (any editor in `docs/editor-setup.md`); the server
+  speaks stdio with `Content-Length` framing.
 
 ## Quick Start
 
