@@ -57,7 +57,7 @@ Methods not listed above return `methodNotFound` per the LSP spec.
 
 1. **Parse errors** — every `noyalib::Error::ParseWithLocation`
    becomes a `Diagnostic` with severity `Error`, span attached.
-   See [crate noyalib's errors.md](../../noyalib/doc/errors.md)
+   See [crate noyalib's errors.md](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib/docs/errors.md)
    for the full variant list.
 2. **Schema validation errors** — when a JSON Schema is
    associated with the document (via the editor's schema-mapping
@@ -124,7 +124,7 @@ what to send back.
 | `crates/noyalib-lsp/benches/lsp_handlers.rs` | Per-handler latency on small + Kubernetes-shaped inputs |
 
 The full pyramid is documented in
-[`docs/TESTING.md`](../../../docs/TESTING.md).
+[`docs/TESTING.md`](https://github.com/sebastienrousseau/noyalib/blob/main/docs/TESTING.md).
 
 ## Related
 

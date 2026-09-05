@@ -25,6 +25,7 @@
 ## Contents
 
 - [Install](#install) — Cargo, distro packages
+- [Requirements](#requirements) — toolchain floor, platforms, the core pin
 - [Quick Start](#quick-start) — smoke test
 - [Why this approach?](#why-this-approach) — design rationale
 - [Surface](#surface) — LSP methods supported
@@ -56,6 +57,19 @@ though `cargo check --lib` still builds. We publish the number we
 verify.
 
 ---
+
+## Requirements
+
+- **Rust 1.86.0 or newer** to build from source: `rust-version` in
+  the manifest, enforced by the `msrv-core` CI job on every push.
+- **Any tier-1 platform.** CI runs the tests on Linux, macOS, and
+  Windows with the stable, beta, and nightly toolchains; stable is the
+  gate, beta and nightly are early warning.
+- **The matching core.** This crate pins `noyalib` at the identical
+  `=0.0.X` and releases in lockstep with it; Cargo resolves that pin
+  for you.
+- **An LSP client** (any editor in `docs/editor-setup.md`); the server
+  speaks stdio with `Content-Length` framing.
 
 ## Quick Start
 
@@ -263,7 +277,7 @@ range that changed, not the buffer size.
 
 The four entry points, identical across every repo in the family:
 
-- **[User Manual](https://sebastienrousseau.github.io/noyalib/manual/)** — the rendered book: user guide, migrations, architecture, policies, ADRs
+- **[User Manual](https://sebastienrousseau.github.io/noyalib-lsp/manual/)** — this crate's rendered book: its guides, architecture, and release notes; the family manual for the core library is at [https://sebastienrousseau.github.io/noyalib/manual/](https://sebastienrousseau.github.io/noyalib/manual/)
 - **[API reference](https://docs.rs/noyalib-lsp)** — rustdoc on docs.rs
 - **[Developer docs](DEVELOPMENT.md)** — this repo's dev entry point, pointing at the family guide
 - **[Ecosystem map](https://github.com/sebastienrousseau/noyalib/blob/main/docs/ECOSYSTEM.md)** — the six crates, the lockstep model, the scorecard
@@ -274,9 +288,9 @@ The four entry points, identical across every repo in the family:
   [`SECURITY.md`](https://github.com/sebastienrousseau/noyalib/blob/main/SECURITY.md)
 - **API reference**: <https://docs.rs/noyalib-lsp>
 - **Editor setup (VS Code, Neovim, Emacs, Helix, Zed, Sublime)**:
-  [`docs/editor-setup.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/editor-setup.md)
+  [`docs/editor-setup.md`](docs/editor-setup.md)
 - **Protocol coverage (which LSP methods are implemented)**:
-  [`docs/protocol-coverage.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/protocol-coverage.md)
+  [`docs/protocol-coverage.md`](docs/protocol-coverage.md)
 - **Workspace README**:
   <https://github.com/sebastienrousseau/noyalib#readme>
 - **LSP specification**:
