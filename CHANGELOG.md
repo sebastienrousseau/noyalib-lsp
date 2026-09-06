@@ -22,6 +22,14 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
   the family gaps closed in this cycle. No local code change unless
   listed below.
 
+### Added
+
+- A VS Code extension (`editors/vscode`): starts `noyalib-lsp` for YAML
+  documents, a `noyalib.path` setting, a restart command, and a CI job
+  that packages the `.vsix` on every push. The README previously named a
+  marketplace listing that did not exist; it now describes the extension
+  that does.
+
 ## [v0.0.34] - 2026-09-05
 
 ### Changed

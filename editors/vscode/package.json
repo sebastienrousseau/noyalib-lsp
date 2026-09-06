@@ -1,0 +1,47 @@
+{
+  "name": "noyalib",
+  "displayName": "noyalib YAML",
+  "description": "YAML diagnostics, formatting and schema hover from the noyalib language server.",
+  "version": "0.0.35",
+  "publisher": "sebastienrousseau",
+  "license": "Apache-2.0 OR MIT",
+  "repository": { "type": "git", "url": "https://github.com/sebastienrousseau/noyalib-lsp", "directory": "editors/vscode" },
+  "homepage": "https://noyalib.com/docs/#lsp",
+  "bugs": { "url": "https://github.com/sebastienrousseau/noyalib-lsp/issues" },
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Programming Languages", "Linters", "Formatters"],
+  "keywords": ["yaml", "language server", "lsp", "formatter", "json schema", "noyalib"],
+  "activationEvents": ["onLanguage:yaml"],
+  "main": "./src/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "noyalib",
+      "properties": {
+        "noyalib.path": {
+          "type": "string",
+          "default": "noyalib-lsp",
+          "description": "Path to the noyalib-lsp binary. Defaults to the one on PATH (cargo install noyalib-lsp --locked)."
+        },
+        "noyalib.trace.server": {
+          "type": "string",
+          "enum": ["off", "messages", "verbose"],
+          "default": "off",
+          "description": "Trace the language server protocol traffic."
+        }
+      }
+    },
+    "commands": [
+      { "command": "noyalib.restart", "title": "noyalib: Restart language server" }
+    ]
+  },
+  "scripts": {
+    "package": "vsce package",
+    "check": "node --check src/extension.js"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.3.2"
+  }
+}

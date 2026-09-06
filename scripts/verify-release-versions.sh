@@ -154,6 +154,15 @@ if "[patch.crates-io]" in manifest_text:
 else:
     ok("Cargo.toml", "no pre-release [patch] section")
 
+# The VS Code extension carries the crate version in its manifest.
+ext = root / "editors" / "vscode" / "package.json"
+if ext.is_file():
+    import json as _json
+    ext_version = _json.loads(ext.read_text(encoding="utf-8")).get("version")
+    if ext_version == version:
+        ok("editors/vscode/package.json", f"extension version {ext_version}")
+    else:
+        bad("editors/vscode/package.json", f"extension version {ext_version} != {version}")
 changelog = root / "CHANGELOG.md"
 if changelog.is_file():
     if re.search(rf"^## \[v?{re.escape(version)}\]", changelog.read_text(encoding="utf-8"), re.M):
