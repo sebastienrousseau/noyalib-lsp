@@ -136,10 +136,11 @@ in the library.
 
 ### Visual Studio Code
 
-The bundled experience ships through the
-[noyalib VS Code extension](https://marketplace.visualstudio.com/items?itemName=sebastienrousseau.noyalib);
-no manual config needed. To point at a system-installed binary
-instead of the bundled one:
+The extension lives in [`editors/vscode`](editors/vscode/) and is packaged
+as a `.vsix` by CI on every push (download it from the workflow run, or
+build it with `npm install && npm run package` in that directory), then
+installed with "Extensions: Install from VSIX…". It starts the
+`noyalib-lsp` binary on your PATH; point at another one with:
 
 ```json
 {

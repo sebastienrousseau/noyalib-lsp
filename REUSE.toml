@@ -84,3 +84,11 @@ path = ["DEVELOPMENT.md", "CONTRIBUTING.md", ".editorconfig", ".markdownlint.yam
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Noyalib"
 SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# The VS Code extension: manifests and its README carry no header of
+# their own (JSON has no comment syntax the tooling accepts).
+[[annotations]]
+path = "editors/vscode/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Noyalib"
+SPDX-License-Identifier = "MIT OR Apache-2.0"

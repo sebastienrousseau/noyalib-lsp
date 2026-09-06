@@ -33,3 +33,7 @@ crates/noyalib-wasm/Cargo.lock
 .corral-state.json
 # mdBook output (docs/book.toml)
 target-book/
+
+editors/vscode/node_modules/
+editors/vscode/*.vsix
+editors/vscode/package-lock.json

@@ -91,3 +91,28 @@ jobs:
             echo "── replaying $t against: ${dirs[*]}"
             cargo +nightly fuzz run "$t" "${dirs[@]}" -- -runs=0
           done
+
+  # The VS Code client in editors/vscode: parses, packages to a .vsix, and
+  # is uploaded so a reviewer can install it from the run.
+  vscode-extension:
+    name: VS Code extension (.vsix)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+      - name: Package
+        working-directory: editors/vscode
+        run: |
+          npm install --no-audit --no-fund --no-package-lock
+          npm run check
+          npx --no-install vsce package
+          ls -l ./*.vsix
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: noyalib-vscode
+          path: editors/vscode/*.vsix
+          if-no-files-found: error
+
