@@ -299,6 +299,16 @@ The four entry points, identical across every repo in the family:
 
 ---
 
+## Conformance
+
+Every push runs the official [yaml-test-suite](https://github.com/yaml/yaml-test-suite)
+through this server's diagnostics, from the same vendored suite and the same
+core commit as the `noyalib` core: 406 of 406 (valid cases produce no
+diagnostic, invalid cases produce one at the failing position). A two-document
+configuration that uses most of YAML at once (`tests/fixtures/ultra-complex/`)
+opens with no diagnostics. Details and the family table:
+[noyalib.com/conformance](https://noyalib.com/conformance/).
+
 ## License
 
 Dual-licensed under [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)

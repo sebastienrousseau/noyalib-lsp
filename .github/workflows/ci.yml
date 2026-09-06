@@ -106,7 +106,7 @@ jobs:
       - name: Package
         working-directory: editors/vscode
         run: |
-          npm install --no-audit --no-fund --no-package-lock
+          npm ci --no-audit --no-fund
           npm run check
           npx --no-install vsce package
           ls -l ./*.vsix

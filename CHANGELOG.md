@@ -13,6 +13,27 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
 
 ## [Unreleased]
 
+## [v0.0.38] - 2026-09-06
+
+### Added
+
+- **The ultra-complex fixture opens with no diagnostics**
+  (`tests/fixtures/ultra-complex/`). The README names and links the
+  official yaml-test-suite.
+
+### Changed
+
+- Lockstep release with noyalib 0.0.38: the Scorecard pinned-dependency
+  fixes across the family. No local code change unless listed below.
+
+### Fixed
+
+- **The VS Code extension builds with `npm ci` from a committed
+  lockfile** (`editors/vscode/package-lock.json`, integrity hashes for
+  every package), so the packaged `.vsix` is reproducible and Scorecard
+  no longer reports the install as unpinned (alert #10). The lockfile is
+  skipped by codespell.
+
 ## [v0.0.37] - 2026-09-06
 
 ### Changed

@@ -189,3 +189,40 @@ fn hover_round_trip_returns_markdown_or_null() {
     // null or { contents: { kind: 'markdown', value: ... } }.
     assert!(result.is_null() || result["contents"]["kind"].as_str() == Some("markdown"));
 }
+
+/// The core's ultra-complex fixture (two documents, anchors and merge
+/// keys at two depths, explicit tags, block scalars, a sequence as a
+/// key) opens with no diagnostics.
+#[test]
+fn ultra_complex_fixture_opens_clean() {
+    let text = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/ultra-complex/valid.yaml"),
+    )
+    .unwrap();
+    let resps = round_trip(&[
+        json!({"jsonrpc": "2.0", "method": "initialize", "id": 1, "params": {}}),
+        json!({
+            "jsonrpc": "2.0",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": "file:///tmp/ultra-complex.yaml",
+                    "languageId": "yaml",
+                    "version": 1,
+                    "text": text
+                }
+            }
+        }),
+    ]);
+    let note = resps
+        .iter()
+        .find(|r| r["method"].as_str() == Some("textDocument/publishDiagnostics"))
+        .expect("publishDiagnostics");
+    assert_eq!(
+        note["params"]["diagnostics"].as_array().map(Vec::len),
+        Some(0),
+        "{}",
+        note["params"]["diagnostics"]
+    );
+}
