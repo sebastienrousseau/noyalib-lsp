@@ -368,3 +368,82 @@ jobs:
               && { echo "version already on crates.io — tolerating"; exit 0; }
             exit "$rc"
           fi
+
+  # ── Publish the VS Code extension ───────────────────────────────────
+  #
+  # Runs only when VSCE_PAT is set, so the release stays green until the
+  # publisher account exists. Create the publisher `sebastienrousseau`
+  # at https://marketplace.visualstudio.com/manage, then add a personal
+  # access token (Azure DevOps, all organisations, Marketplace: Manage)
+  # as the repository secret VSCE_PAT.
+  vscode-marketplace:
+    name: Publish the VS Code extension
+    needs: [github-release]
+    if: startsWith(github.ref, 'refs/tags/v') && github.event.inputs.dry_run != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.ref }}
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      - name: Is a Marketplace token configured?
+        id: token
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -n "$VSCE_PAT" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::VSCE_PAT is not set, so the extension was packaged but not published."
+          fi
+
+      - name: Build the extension
+        working-directory: editors/vscode
+        run: |
+          npm ci --no-audit --no-fund
+          npm run check
+          npx --no-install vsce package --out "noyalib-${GITHUB_REF_NAME#v}.vsix"
+          ls -l ./*.vsix
+
+      # The tag is the single source of truth for the version: a package
+      # whose manifest disagrees would publish under the wrong number.
+      - name: The manifest must match the tag
+        working-directory: editors/vscode
+        run: |
+          manifest=$(node -p "require('./package.json').version")
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$manifest" != "$tag" ]; then
+            echo "extension version $manifest does not match tag $tag"
+            exit 1
+          fi
+          echo "extension $manifest matches tag $tag"
+
+      - name: Publish to the Marketplace
+        if: steps.token.outputs.configured == 'true'
+        working-directory: editors/vscode
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          set -uo pipefail
+          # Idempotent: re-running a tag finds the version already there.
+          out=$(npx --no-install vsce publish --packagePath ./*.vsix 2>&1) && rc=0 || rc=$?
+          echo "$out"
+          if [ "$rc" -ne 0 ]; then
+            echo "$out" | grep -qiE 'already exists|version.*already' \
+              && { echo "version already on the Marketplace — tolerating"; exit 0; }
+            exit "$rc"
+          fi
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: noyalib-vscode-${{ github.ref_name }}
+          path: editors/vscode/*.vsix
+          if-no-files-found: error

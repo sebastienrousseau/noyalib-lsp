@@ -1,2 +1,7 @@
-node_modules/@vscode/**
+# Only the bundle ships. The sources, the dependency tree and the
+# tooling stay out, which took the package from 322 files to a handful.
+src/**
+node_modules/**
+package-lock.json
 **/*.map
+.vscodeignore
