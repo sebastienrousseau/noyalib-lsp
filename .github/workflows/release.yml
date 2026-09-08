@@ -426,21 +426,45 @@ jobs:
           fi
           echo "extension $manifest matches tag $tag"
 
+      # Authentication, checked against vsce 3.9.2 on 2026-09-08.
+      #
+      # This publishes with a personal access token. Azure DevOps
+      # retires global PATs on 1 December 2026, and a global PAT is
+      # exactly what the Marketplace needs, so this step has a
+      # deadline rather than an indefinite life.
+      #
+      # Two replacements exist. Neither is ready to adopt:
+      #
+      #   --oidc              Trusted publishing. GitHub mints an
+      #                       id-token for the
+      #                       marketplace.visualstudio.com audience,
+      #                       vsce exchanges it at
+      #                       /_apis/gallery/token for a short-lived
+      #                       credential, and nothing is stored. This
+      #                       is the destination. But the flag is
+      #                       hidden (hideHelp) and ships only in
+      #                       3.9.3 pre-releases; latest stable is
+      #                       3.9.2. It also needs a trusted
+      #                       publishing policy on the publisher, and
+      #                       `id-token: write` added to this job.
+      #
+      #   --azure-credential  Entra ID via DefaultAzureCredential.
+      #                       Shipping in 3.9.2, but needs a service
+      #                       principal with a federated credential
+      #                       and an azure/login step.
+      #
+      # Revisit before December, preferring --oidc once it is stable.
       - name: Publish to the Marketplace
         if: steps.token.outputs.configured == 'true'
         working-directory: editors/vscode
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          set -uo pipefail
-          # Idempotent: re-running a tag finds the version already there.
-          out=$(npx --no-install vsce publish --packagePath ./*.vsix 2>&1) && rc=0 || rc=$?
-          echo "$out"
-          if [ "$rc" -ne 0 ]; then
-            echo "$out" | grep -qiE 'already exists|version.*already' \
-              && { echo "version already on the Marketplace — tolerating"; exit 0; }
-            exit "$rc"
-          fi
+          # --skip-duplicate turns a re-run of the same tag into a
+          # no-op instead of an error. It replaces matching on the
+          # text of a failure message, which broke whenever the
+          # Marketplace reworded it.
+          npx --no-install vsce publish --packagePath ./*.vsix --skip-duplicate
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
