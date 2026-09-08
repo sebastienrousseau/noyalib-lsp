@@ -21,12 +21,16 @@ the absolute path in each editor's config.
 ## VS Code
 
 The recommended path is the **noyalib VS Code extension**, which
-bundles the LSP server and configures it automatically. Install
-from the marketplace:
+drives the LSP server and configures it automatically. Install it
+from the Marketplace:
 
 ```
-ext install noyalib.noyalib-vscode
+ext install sebastienrousseau.noyalib
 ```
+
+The listing goes live with the first release published under the
+`sebastienrousseau` publisher. Until then, every CI run attaches a
+`.vsix` you can install with "Extensions: Install from VSIX…".
 
 For a manual setup (e.g. you want to drive your own LSP client),
 add to `settings.json`:
@@ -35,7 +39,7 @@ add to `settings.json`:
 {
   "yaml.server.path": "noyalib-lsp",
   "[yaml]": {
-    "editor.defaultFormatter": "noyalib.noyalib-vscode",
+    "editor.defaultFormatter": "sebastienrousseau.noyalib",
     "editor.formatOnSave": true
   }
 }

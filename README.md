@@ -137,11 +137,18 @@ in the library.
 
 ### Visual Studio Code
 
-The extension lives in [`editors/vscode`](editors/vscode/) and is packaged
-as a `.vsix` by CI on every push (download it from the workflow run, or
-build it with `npm install && npm run package` in that directory), then
-installed with "Extensions: Install from VSIX…". It starts the
-`noyalib-lsp` binary on your PATH; point at another one with:
+The extension lives in [`editors/vscode`](editors/vscode/). Once the
+listing is live it installs from the Marketplace:
+
+```
+ext install sebastienrousseau.noyalib
+```
+
+CI also packages a `.vsix` on every push, so you can download it from a
+workflow run (or build it with `npm install && npm run package` in that
+directory) and use "Extensions: Install from VSIX…". Either way it
+starts the `noyalib-lsp` binary on your PATH; point at another one
+with:
 
 ```json
 {
