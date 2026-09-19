@@ -117,7 +117,7 @@ version = "0.3.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.noyalib]]
-version = "0.0.44"
+version = "0.0.45"
 criteria = "safe-to-deploy"
 
 [[exemptions.noyalib-lsp]]
