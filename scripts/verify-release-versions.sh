@@ -173,6 +173,18 @@ if ext.is_file():
         ok("editors/vscode/package.json", f"extension version {ext_version}")
     else:
         bad("editors/vscode/package.json", f"extension version {ext_version} != {version}")
+# CITATION.cff carries its own version field. The core's gate has
+# checked it since the v0.0.31 cycle; the satellites never gained the
+# check, and all five sat at 0.0.33 for twelve releases as a result.
+citation = root / "CITATION.cff"
+if citation.is_file():
+    text = citation.read_text(encoding="utf-8")
+    m = re.search(r"^version: (\S+)$", text, re.M)
+    if m and m.group(1) == version:
+        ok("CITATION.cff", f"version {m.group(1)}")
+    else:
+        bad("CITATION.cff", f"says {m.group(1) if m else 'nothing'} — update the version field")
+
 changelog = root / "CHANGELOG.md"
 if changelog.is_file():
     if re.search(rf"^## \[v?{re.escape(version)}\]", changelog.read_text(encoding="utf-8"), re.M):

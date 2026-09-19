@@ -11,6 +11,18 @@ and versions in lockstep with the
 [`noyalib`](https://github.com/sebastienrousseau/noyalib) core crate —
 see that repository's `CHANGELOG.md` for the release-wide notes.
 
+## [v0.0.45] - 2026-09-18
+
+### Changed
+
+- Tracks `noyalib` 0.0.45. The core release fixes a leading comment
+  anchoring on the value line rather than the key line, and a
+  `cst::Document::set` guard that let a fragment shadow a sibling with a
+  duplicate key. Both are edit-path defects the language server drives
+  directly. The fixes arrive via the version pin; no source change.
+
+  See the core crate's `CHANGELOG.md` for the full release notes.
+
 ## [v0.0.44] - 2026-09-17
 
 ### Changed
