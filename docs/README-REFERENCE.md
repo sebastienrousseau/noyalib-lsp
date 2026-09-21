@@ -235,7 +235,7 @@ command = "noyalib-lsp"
 ## Examples
 
 Editor-driving demos under
-[`crates/noyalib-lsp/examples/`](examples/):
+[`examples/`](../examples/):
 
 | Script | What it shows |
 |---|---|
