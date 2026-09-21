@@ -11,6 +11,20 @@ and versions in lockstep with the
 [`noyalib`](https://github.com/sebastienrousseau/noyalib) core crate —
 see that repository's `CHANGELOG.md` for the release-wide notes.
 
+## [v0.0.46] - 2026-09-20
+
+### Changed
+
+- Tracks `noyalib` 0.0.46 under the exact lockstep pin and aligns the VS Code
+  extension metadata with the release.
+- Reworked the README to the ecosystem template while retaining the complete
+  editor configuration guide in `docs/README-REFERENCE.md`.
+
+### Added
+
+- Local comparison, benchmark-method, engineering-policy, and compliance-grade
+  pages for the rendered manual.
+
 ## [v0.0.45] - 2026-09-18
 
 ### Changed

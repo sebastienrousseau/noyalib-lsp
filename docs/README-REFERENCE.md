@@ -1,0 +1,323 @@
+<!-- SPDX-License-Identifier: Apache-2.0 OR MIT -->
+
+<p align="center">
+  <img src="https://cloudcdn.pro/noyalib/v1/logos/noyalib.svg" alt="Noyalib logo" width="128" />
+</p>
+
+<h1 align="center">noyalib-lsp</h1>
+
+<p align="center">
+  <strong>Language Server Protocol implementation for noyalib —
+  YAML formatting, validation, and hover information delivered
+  to any LSP-aware editor over stdio JSON-RPC.</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/sebastienrousseau/noyalib-lsp/actions"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/noyalib-lsp/ci.yml?style=for-the-badge&logo=github" alt="Build" /></a>
+  <a href="https://crates.io/crates/noyalib-lsp"><img src="https://img.shields.io/crates/v/noyalib-lsp.svg?style=for-the-badge&color=fc8d62&logo=rust" alt="Crates.io" /></a>
+  <a href="https://docs.rs/noyalib-lsp"><img src="https://img.shields.io/badge/docs.rs-noyalib--lsp-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" alt="Docs.rs" /></a>
+  <a href="https://lib.rs/crates/noyalib-lsp"><img src="https://img.shields.io/badge/lib.rs-noyalib-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/sebastienrousseau/noyalib-lsp"><img src="https://img.shields.io/ossf-scorecard/github.com/sebastienrousseau/noyalib-lsp?style=for-the-badge&label=OpenSSF%20Scorecard&logo=openssf" alt="OpenSSF Scorecard" /></a>
+  <a href="https://www.bestpractices.dev/projects/14495"><img src="https://img.shields.io/cii/level/14495?style=for-the-badge&label=OpenSSF%20Best%20Practices&logo=openssf" alt="OpenSSF Best Practices" /></a>
+</p>
+
+---
+
+## Contents
+
+- [Install](#install) — Cargo, distro packages
+- [Requirements](#requirements) — toolchain floor, platforms, the core pin
+- [Quick Start](#quick-start) — smoke test
+- [Why this approach?](#why-this-approach) — design rationale
+- [Surface](#surface) — LSP methods supported
+- [Editor configuration](#editor-configuration) — VS Code, Zed, Neovim, Helix, Sublime
+- [Examples](#examples) — JSON-RPC scripts
+- [Performance](#performance) — formatter cost
+- [When not to use noyalib-lsp](#when-not-to-use-noyalib-lsp)
+- [Documentation](#documentation)
+- [License](#license)
+
+---
+
+## Install
+
+```bash
+cargo install noyalib-lsp
+```
+
+Releases ship the crate archive with a CycloneDX SBOM and
+sigstore bundles. Pre-built binary tarballs and distro packages
+are not published yet; `cargo install` is the supported path.
+
+**MSRV: Rust 1.86.0** — the lowest toolchain this crate can be
+**built and tested** on, matching the noyalib core floor.
+`criterion 0.8` (the benchmark dev-dependency) declares
+`rust-version = 1.86`, so `cargo check --all-targets` and the
+bench suite fail on 1.85 (`criterion@0.8.2 requires rustc 1.86`),
+though `cargo check --lib` still builds. We publish the number we
+verify.
+
+---
+
+## Requirements
+
+- **Rust 1.86.0 or newer** to build from source: `rust-version` in
+  the manifest, enforced by the `msrv-core` CI job on every push.
+- **Any tier-1 platform.** CI runs the tests on Linux, macOS, and
+  Windows with the stable, beta, and nightly toolchains; stable is the
+  gate, beta and nightly are early warning.
+- **The matching core.** This crate pins `noyalib` at the identical
+  `=0.0.X` and releases in lockstep with it; Cargo resolves that pin
+  for you.
+- **An LSP client** (any editor in `docs/editor-setup.md`); the server
+  speaks stdio with `Content-Length` framing.
+
+## Quick Start
+
+```bash
+# Smoke test — drives a one-shot LSP handshake over stdio.
+noyalib-lsp --version
+
+# As a child process spawned by your editor (the typical path).
+# See "Editor configuration" below for VS Code / Zed / Neovim /
+# Helix / Sublime examples.
+```
+
+---
+
+## Why this approach?
+
+The market has two YAML language servers (`yaml-language-server`,
+`taplo`-style hybrids) and both make tradeoffs noyalib-lsp avoids:
+
+- **Byte-faithful formatting.** `textDocument/formatting` runs
+  through noyalib's lossless CST. An already-canonical document
+  produces an empty `TextEdit[]` — your editor doesn't churn
+  whitespace on save. Comments stay where they were; indent
+  width follows the file's dominant style; only quoting and
+  inter-key whitespace normalise.
+- **Real diagnostics.** Parse errors flow through
+  `textDocument/publishDiagnostics` with line / column
+  locations the editor's gutter can highlight directly. No
+  best-effort parsers, no recovery hand-waving.
+- **Schema-aware hover.** When a JSON Schema is attached, hover
+  surfaces the resolved field type. Schema descriptions land
+  in the hover card in a follow-up.
+- **Stdio transport.** Standard `Content-Length`-framed
+  JSON-RPC 2.0. Works with every LSP-compliant client; no
+  client-specific protocol extensions.
+- **Pure-Rust, zero `unsafe`.** Same `#![forbid(unsafe_code)]`
+  guarantee as the noyalib core library.
+
+The whole thing is ~5 KLOC of Rust; the heavy lifting is in the
+`noyalib` library, the LSP wrapper just bridges JSON-RPC to the
+library's CST + parser surface.
+
+---
+
+## Surface
+
+| LSP method | What it does |
+|---|---|
+| `initialize` / `initialized` / `shutdown` / `exit` | Full LSP lifecycle handshake. |
+| `textDocument/didOpen` / `didChange` / `didClose` | Full-text document sync (`TextDocumentSyncKind = 1`). |
+| `textDocument/publishDiagnostics` | Parse-error diagnostics emitted on every open + change. Line / column locations. |
+| `textDocument/formatting` | Full-document `TextEdit[]` from the CST formatter. Empty array when the document is already canonical. |
+| `textDocument/hover` | Markdown card with cursor position + document type. Schema-driven descriptions tracked for follow-up. |
+
+Server capabilities response includes `textDocumentSync = 1`,
+`documentFormattingProvider = true`, `hoverProvider = true`.
+Future capabilities (`rangeFormatting`, `documentSymbols`,
+`codeActions`) are gated behind the same lossless-CST surface
+in the library.
+
+---
+
+## Editor configuration
+
+### Visual Studio Code
+
+The extension lives in [`editors/vscode`](../editors/vscode/). Once the
+listing is live it installs from the Marketplace:
+
+```
+ext install sebastienrousseau.noyalib
+```
+
+CI also packages a `.vsix` on every push, so you can download it from a
+workflow run (or build it with `npm install && npm run package` in that
+directory) and use "Extensions: Install from VSIX…". Either way it
+starts the `noyalib-lsp` binary on your PATH; point at another one
+with:
+
+```json
+{
+  "noyalib.path": "/usr/local/bin/noyalib-lsp",
+  "[yaml]": {
+    "editor.defaultFormatter": "sebastienrousseau.noyalib",
+    "editor.formatOnSave": true
+  }
+}
+```
+
+### Zed
+
+`~/.config/zed/settings.json`:
+
+```json
+{
+  "languages": {
+    "YAML": {
+      "language_servers": ["noyalib-lsp"],
+      "format_on_save": "on"
+    }
+  },
+  "lsp": {
+    "noyalib-lsp": {
+      "binary": { "path": "noyalib-lsp" }
+    }
+  }
+}
+```
+
+### Neovim (via `nvim-lspconfig`)
+
+```lua
+require("lspconfig.configs").noyalib = {
+  default_config = {
+    cmd = { "noyalib-lsp" },
+    filetypes = { "yaml" },
+    root_dir = require("lspconfig.util").find_git_ancestor,
+  },
+}
+require("lspconfig").noyalib.setup {
+  on_attach = function(_, bufnr)
+    vim.api.nvim_create_autocmd("BufWritePre", {
+      buffer = bufnr,
+      callback = function() vim.lsp.buf.format() end,
+    })
+  end,
+}
+```
+
+### Helix
+
+`~/.config/helix/languages.toml`:
+
+```toml
+[[language]]
+name              = "yaml"
+language-servers  = ["noyalib-lsp"]
+auto-format       = true
+
+[language-server.noyalib-lsp]
+command = "noyalib-lsp"
+```
+
+### Sublime Text (via `LSP` package)
+
+`~/.config/sublime-text/Packages/User/LSP.sublime-settings`:
+
+```json
+{
+  "clients": {
+    "noyalib-lsp": {
+      "enabled": true,
+      "command": ["noyalib-lsp"],
+      "selector": "source.yaml"
+    }
+  }
+}
+```
+
+---
+
+## Examples
+
+Editor-driving demos under
+[`examples/`](../examples/):
+
+| Script | What it shows |
+|---|---|
+| [`handshake.sh`](../examples/handshake.sh) | One-shot `initialize` / `initialized` / `shutdown` / `exit` round-trip. Smoke test for protocol compliance. |
+| [`format-on-save.sh`](../examples/format-on-save.sh) | `didOpen` → `textDocument/formatting`. Returns the `TextEdit[]` an editor would apply on save. |
+| [`hover-cursor.sh`](../examples/hover-cursor.sh) | `didOpen` → `textDocument/hover` at a specific `(line, column)`. |
+
+Each script pipes a sequence of `Content-Length`-framed JSON-RPC
+messages into `noyalib-lsp` over stdio and prints the response
+stream. POSIX-shell only — no `jq`, no `node` dependencies.
+
+```bash
+chmod +x crates/noyalib-lsp/examples/*.sh
+crates/noyalib-lsp/examples/handshake.sh
+```
+
+---
+
+## Performance
+
+`textDocument/formatting` for a 1 MiB YAML document on Apple
+M-series ≈ 12 ms (the same wall-clock as `noyafmt --write`
+since both share the CST). For per-keystroke formatting under
+human-perceivable latency, the server returns an empty
+`TextEdit[]` when the document is already canonical, so the
+editor avoids a round-trip on every `didChange` after a save.
+
+`textDocument/publishDiagnostics` runs on every `didChange`;
+parse cost on a freshly-edited buffer is dominated by the byte
+range that changed, not the buffer size.
+
+---
+
+## When not to use noyalib-lsp
+
+- **You want OpenAPI / AsyncAPI / Kubernetes-CRD hover docs out
+  of the box.** That comes from the JSON Schema attached to
+  the buffer. noyalib-lsp doesn't ship a schema registry; you
+  point it at a schema explicitly via the
+  `yaml.schemas` (style) settings exposed by your editor.
+- **You need WebDAV-style multi-document operations
+  (`workspace/applyEdit` for cross-file refactor).** Not
+  implemented yet; tracked as a v0.1.x capability extension.
+
+---
+
+## Documentation
+
+The four entry points, identical across every repo in the family:
+
+- **[User Manual](https://sebastienrousseau.github.io/noyalib-lsp/manual/)** — this crate's rendered book: its guides, architecture, and release notes; the family manual for the core library is at [https://sebastienrousseau.github.io/noyalib/manual/](https://sebastienrousseau.github.io/noyalib/manual/)
+- **[API reference](https://docs.rs/noyalib-lsp)** — rustdoc on docs.rs
+- **[Developer docs](../DEVELOPMENT.md)** — this repo's dev entry point, pointing at the family guide
+- **[Ecosystem map](https://github.com/sebastienrousseau/noyalib/blob/main/docs/ECOSYSTEM.md)** — the six crates, the lockstep model, the scorecard
+
+- **Engineering policies** (MSRV, SemVer, security, performance, concurrency, platform support, feature flags):
+  [`docs/POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/docs/POLICIES.md)
+- **Security policy**:
+  [`SECURITY.md`](https://github.com/sebastienrousseau/noyalib/blob/main/SECURITY.md)
+- **API reference**: <https://docs.rs/noyalib-lsp>
+- **Editor setup (VS Code, Neovim, Emacs, Helix, Zed, Sublime)**:
+  [`docs/editor-setup.md`](editor-setup.md)
+- **Protocol coverage (which LSP methods are implemented)**:
+  [`docs/protocol-coverage.md`](protocol-coverage.md)
+- **Workspace README**:
+  <https://github.com/sebastienrousseau/noyalib#readme>
+- **LSP specification**:
+  <https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/>
+
+---
+
+## Conformance
+
+Every push runs the official [yaml-test-suite](https://github.com/yaml/yaml-test-suite)
+through this server's diagnostics, from the same vendored suite and the same
+core commit as the `noyalib` core: 406 of 406 (valid cases produce no
+diagnostic, invalid cases produce one at the failing position). A two-document
+configuration that uses most of YAML at once (`tests/fixtures/ultra-complex/`)
+opens with no diagnostics. Details and the family table:
+[noyalib.com/conformance](https://noyalib.com/conformance/).
+
+## License
+
+Dual-licensed under [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+or [MIT](https://opensource.org/licenses/MIT), at your option.
