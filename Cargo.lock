@@ -506,7 +506,7 @@ checksum = "c2a86d3146ed3995b5913c414f6664344b9617457320782e64f0bb44afd49d74"
 
 [[package]]
 name = "noyalib"
-version = "0.0.46"
+version = "0.0.47"
 dependencies = [
  "hashbrown",
  "indexmap",
@@ -522,7 +522,7 @@ dependencies = [
 
 [[package]]
 name = "noyalib-lsp"
-version = "0.0.46"
+version = "0.0.47"
 dependencies = [
  "criterion",
  "noyalib",
