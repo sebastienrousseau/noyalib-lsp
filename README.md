@@ -59,7 +59,7 @@
 
 ```toml
 [dependencies]
-noyalib-lsp = "0.0.49"
+noyalib-lsp = "0.0.50"
 ```
 
 Install the language-server binary with Cargo:
@@ -78,7 +78,7 @@ Other LSP clients start the `noyalib-lsp` binary over stdio.
 - Rust **1.86.0 or newer** when building from source.
 - Linux, macOS, and Windows are tested on stable, beta, and nightly Rust.
 - An editor or client supporting LSP 3.17 over `Content-Length` framed stdio.
-- The server pins `noyalib` at exactly `=0.0.49`.
+- The server pins `noyalib` at exactly `=0.0.50`.
 
 | Surface | Minimum toolchain | Enforcement |
 | :--- | :---: | :--- |
