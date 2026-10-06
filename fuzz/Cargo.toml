@@ -23,10 +23,6 @@ path = "fuzz_targets/fuzz_handle_message.rs"
 test = false
 doc = false
 bench = false
-
-[patch.crates-io]
-noyalib = { git = "https://github.com/sebastienrousseau/noyalib", branch = "feat/v0.0.52" }
-
 [[bin]]
 name = "fuzz_did_change"
 path = "fuzz_targets/fuzz_did_change.rs"
