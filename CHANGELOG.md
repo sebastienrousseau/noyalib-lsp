@@ -11,6 +11,14 @@ and versions in lockstep with the
 [`noyalib`](https://github.com/sebastienrousseau/noyalib) core crate —
 see that repository's `CHANGELOG.md` for the release-wide notes.
 
+## [v0.0.52] - 2026-09-22
+
+### Changed
+
+- Tracks `noyalib` 0.0.52 under the exact lockstep pin.
+- Publishes stable diagnostic codes and source-aware UTF-16 ranges derived
+  from the core structured diagnostic payload.
+
 ## [v0.0.51] - 2026-09-22
 
 ### Changed
