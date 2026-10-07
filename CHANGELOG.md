@@ -34,6 +34,9 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
   support for them), relative paths are refused, and the server starts
   in the home directory instead of the workspace. `npm test` in
   `editors/vscode` covers the path rules and the manifest.
+- `textDocument/hover` with a column near `usize::MAX` reports nothing
+  instead of overflowing the offset sum, which panicked debug builds and
+  wrapped in release builds.
 
 ### Security
 

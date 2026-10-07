@@ -55,11 +55,7 @@ pub fn byte_offset_of(text: &str, line: usize, column: usize) -> Option<usize> {
     let mut line_start = 0usize;
     for (i, b) in text.bytes().enumerate() {
         if current_line == line {
-            let target = line_start + column;
-            if target <= text.len() {
-                return Some(target);
-            }
-            return None;
+            return offset_within(text, line_start, column);
         }
         if b == b'\n' {
             current_line += 1;
@@ -67,12 +63,17 @@ pub fn byte_offset_of(text: &str, line: usize, column: usize) -> Option<usize> {
         }
     }
     if current_line == line {
-        let target = line_start + column;
-        if target <= text.len() {
-            return Some(target);
-        }
+        return offset_within(text, line_start, column);
     }
     None
+}
+
+/// `line_start + column` when it lands inside `text`. A client-supplied
+/// column can be any `u32`/`usize`, so the sum is checked.
+fn offset_within(text: &str, line_start: usize, column: usize) -> Option<usize> {
+    line_start
+        .checked_add(column)
+        .filter(|&target| target <= text.len())
 }
 
 fn type_name(v: &noyalib::Value) -> &'static str {
@@ -134,6 +135,13 @@ mod tests {
     #[test]
     fn byte_offset_of_returns_none_for_out_of_range_line() {
         assert_eq!(byte_offset_of("a\n", 5, 0), None);
+    }
+
+    #[test]
+    fn byte_offset_of_a_huge_column_is_out_of_range_not_an_overflow() {
+        assert_eq!(byte_offset_of("a: 1\nb: 2\n", 1, usize::MAX), None);
+        assert_eq!(byte_offset_of("abc", 0, usize::MAX), None);
+        assert_eq!(hover_at("a: 1\n", 0, usize::MAX), JsonValue::Null);
     }
 
     #[test]
