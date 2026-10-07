@@ -164,6 +164,17 @@ if "[patch.crates-io]" in manifest_text:
 else:
     ok("Cargo.toml", "no pre-release [patch] section")
 
+# cargo-deny may allow the core's git source only while the pre-release
+# [patch] above resolves through it; a release allows none, so the
+# allowance cannot outlive the patch it exists for.
+deny_toml = root / "deny.toml"
+if deny_toml.is_file():
+    allow_git = re.search(r"^allow-git\s*=\s*\[(.*?)\]", deny_toml.read_text(encoding="utf-8"), re.M | re.S)
+    if allow_git and allow_git.group(1).strip():
+        bad("deny.toml", "allow-git lists a git source; empty it with the [patch] to cut a release")
+    else:
+        ok("deny.toml", "no git source allowed")
+
 # The VS Code extension carries the crate version in its manifest.
 ext = root / "editors" / "vscode" / "package.json"
 if ext.is_file():
