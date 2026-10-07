@@ -12,6 +12,13 @@
 
 use serde_json::{Value as JsonValue, json};
 
+/// The LSP position just past the last character of `text`.
+fn end_position(text: &str) -> (usize, usize) {
+    let lines = text.bytes().filter(|&b| b == b'\n').count();
+    let last_line = text.rsplit('\n').next().unwrap_or("");
+    (lines, last_line.encode_utf16().count())
+}
+
 /// Build the LSP `TextEdit[]` array that, applied to `text`, yields
 /// the formatted document.
 ///
@@ -34,17 +41,12 @@ pub fn full_document_edits(text: &str) -> noyalib::Result<Vec<JsonValue>> {
         return Ok(Vec::new());
     }
 
-    // LSP positions are zero-based line/character; the end is
-    // *exclusive*. We use a sentinel large end so the range covers
-    // the entire document regardless of length — the LSP spec
-    // permits the server to clamp to the actual document end.
-    let end_line = text
-        .bytes()
-        .filter(|&b| b == b'\n')
-        .count()
-        .max(1)
-        .saturating_sub(if text.ends_with('\n') { 1 } else { 0 });
-    let end_character = text.lines().last().unwrap_or("").len();
+    // LSP positions are zero-based lines and UTF-16 code units, and the
+    // end is exclusive. The range ends exactly at the end of the text:
+    // after the final newline when there is one (so the edit replaces
+    // it rather than leaving a duplicate behind), measured in UTF-16
+    // so a line with non-ASCII characters is not over- or under-shot.
+    let (end_line, end_character) = end_position(text);
 
     Ok(vec![json!({
         "range": {
@@ -97,24 +99,75 @@ mod tests {
     #[test]
     fn end_position_for_trailing_newline_input() {
         let edits = full_document_edits("a:    1\nb:    2\n").unwrap();
-        // Two lines, trailing newline: end line is the last content
-        // line (zero-based), not the phantom line after it.
-        assert_eq!(edits[0]["range"]["end"]["line"], 1);
+        // Two lines and a trailing newline: the range ends at the start
+        // of the empty line after it, so the newline is replaced too.
+        assert_eq!(edits[0]["range"]["end"]["line"], 2);
+        assert_eq!(edits[0]["range"]["end"]["character"], 0);
     }
 
-    /// Without a trailing newline the end line is a *sentinel* one past
-    /// the last content line (`count(0).max(1)` with no newline to
-    /// subtract). That is deliberate — the header comment notes the
-    /// range intentionally over-reaches and the LSP spec lets the client
-    /// clamp to the real document end. Asserted here so the behaviour is
-    /// pinned rather than accidental.
     #[test]
     fn end_position_for_input_without_trailing_newline() {
         let edits = full_document_edits("a:    1").unwrap();
         assert_eq!(edits.len(), 1);
-        assert_eq!(edits[0]["range"]["end"]["line"], 1);
-        // End character is the length of the last line of the *input*.
+        assert_eq!(edits[0]["range"]["end"]["line"], 0);
         assert_eq!(edits[0]["range"]["end"]["character"], "a:    1".len());
+    }
+
+    #[test]
+    fn end_character_counts_utf16_code_units() {
+        // "é" is 2 UTF-8 bytes and 1 UTF-16 unit; "😀" is 4 bytes and 2 units.
+        assert_eq!(end_position("k: é😀"), (0, 6));
+        assert_eq!(end_position("a\nk: é😀"), (1, 6));
+        assert_eq!(end_position(""), (0, 0));
+    }
+
+    /// Apply a whole-document edit the way a client does: positions are
+    /// zero-based lines and UTF-16 code units, and the range must cover
+    /// exactly the text it replaces.
+    fn apply(text: &str, edit: &JsonValue) -> String {
+        let at = |pos: &JsonValue| -> usize {
+            let line = pos["line"].as_u64().unwrap() as usize;
+            let character = pos["character"].as_u64().unwrap() as usize;
+            let line_start: usize = text.split_inclusive('\n').take(line).map(str::len).sum();
+            let rest = &text[line_start..];
+            let mut units = 0;
+            for (i, c) in rest.char_indices() {
+                if units == character {
+                    return line_start + i;
+                }
+                assert!(
+                    c != '\n',
+                    "character {character} is past the end of line {line}"
+                );
+                units += c.len_utf16();
+            }
+            assert_eq!(units, character, "position past the end of the document");
+            text.len()
+        };
+        let start = at(&edit["range"]["start"]);
+        let end = at(&edit["range"]["end"]);
+        format!(
+            "{}{}{}",
+            &text[..start],
+            edit["newText"].as_str().unwrap(),
+            &text[end..]
+        )
+    }
+
+    #[test]
+    fn applying_the_edit_yields_exactly_the_formatted_text() {
+        for text in [
+            "a:    1\nb:    2\n",
+            "a:    1",
+            "k:    \"é€😀\"\n",
+            "k:    \"é€😀\"",
+            "a:\n  - 1\n  -   2\n\n",
+        ] {
+            let edits = full_document_edits(text).unwrap();
+            assert_eq!(edits.len(), 1, "{text:?}");
+            let want = noyalib::cst::format(text).unwrap();
+            assert_eq!(apply(text, &edits[0]), want, "{text:?}");
+        }
     }
 
     #[test]
