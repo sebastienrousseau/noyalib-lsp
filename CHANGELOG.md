@@ -28,6 +28,12 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
   of the document, after the final newline and counted in UTF-16 code
   units. It used to stop before the final newline, so applying the edit
   left a duplicate blank line, and counted bytes on the last line.
+- The VS Code extension no longer lets an opened folder choose what it
+  runs: `noyalib.path` is a `machine-overridable` setting that VS Code
+  ignores in untrusted workspaces (the extension declares limited
+  support for them), relative paths are refused, and the server starts
+  in the home directory instead of the workspace. `npm test` in
+  `editors/vscode` covers the path rules and the manifest.
 
 ### Security
 

@@ -34,6 +34,15 @@
     "onLanguage:yaml"
   ],
   "main": "./dist/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In an untrusted workspace the server binary comes from your user settings or PATH; the workspace's noyalib.path is ignored until you trust it.",
+      "restrictedConfigurations": [
+        "noyalib.path"
+      ]
+    }
+  },
   "contributes": {
     "configuration": {
       "title": "noyalib",
@@ -41,7 +50,8 @@
         "noyalib.path": {
           "type": "string",
           "default": "noyalib-lsp",
-          "description": "Path to the noyalib-lsp binary. Defaults to the one on PATH (cargo install noyalib-lsp --locked)."
+          "scope": "machine-overridable",
+          "description": "Path to the noyalib-lsp binary: a command name looked up on PATH (the default, from cargo install noyalib-lsp --locked) or an absolute path. Relative paths are refused, and a workspace's value applies only once the workspace is trusted."
         },
         "noyalib.trace.server": {
           "type": "string",
@@ -65,8 +75,9 @@
   "scripts": {
     "bundle": "esbuild src/extension.js --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node20 --minify",
     "package": "npm run bundle && vsce package",
-    "check": "node --check src/extension.js",
-    "vscode:prepublish": "npm run bundle"
+    "check": "node --check src/extension.js && node --check src/server-command.js",
+    "vscode:prepublish": "npm run bundle",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
