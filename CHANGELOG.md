@@ -24,6 +24,10 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
   (which exited the server) or a header without a length is answered
   with a JSON-RPC parse error (-32700) and the server reads the next
   message. Messages over 256 MiB are refused and skipped unread.
+- `textDocument/formatting` returns a range that ends exactly at the end
+  of the document, after the final newline and counted in UTF-16 code
+  units. It used to stop before the final newline, so applying the edit
+  left a duplicate blank line, and counted bytes on the last line.
 
 ## [v0.0.54] - 2026-10-07
 
