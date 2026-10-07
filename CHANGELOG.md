@@ -29,6 +29,14 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
   units. It used to stop before the final newline, so applying the edit
   left a duplicate blank line, and counted bytes on the last line.
 
+### Security
+
+- The VS Code extension's packaging tool moves to `@vscode/vsce` 4.0.0,
+  which drops the `secretlint`/`globby` chain that pulled in `braces`
+  (GHSA-vfj7-8cjw-p6xm) and `fast-uri` 3.1.7 (GHSA-hrr3-gc8f-f4qj);
+  `npm audit` reports 0 vulnerabilities. Both were build-time only and
+  never shipped in the VSIX.
+
 ## [v0.0.54] - 2026-10-07
 
 ### Changed
