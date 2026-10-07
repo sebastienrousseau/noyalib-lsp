@@ -17,6 +17,14 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
 
 - Tracks `noyalib` 0.0.55 under the exact lockstep pin.
 
+### Fixed
+
+- A malformed frame no longer stops the server: a `Content-Length` near
+  `u64::MAX` (which overflowed and panicked), a body that is not UTF-8
+  (which exited the server) or a header without a length is answered
+  with a JSON-RPC parse error (-32700) and the server reads the next
+  message. Messages over 256 MiB are refused and skipped unread.
+
 ## [v0.0.54] - 2026-10-07
 
 ### Changed
