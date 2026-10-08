@@ -16,6 +16,9 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
 ### Changed
 
 - Tracks `noyalib` 0.0.56 under the exact lockstep pin.
+- The VS Code extension moves to `vscode-languageclient` 10.1.2 and
+  esbuild 0.28 (Dependabot #104), and so requires VS Code 1.91 or later
+  (`engines.vscode` `^1.91.0`), the minimum languageclient 10 declares.
 
 ## [v0.0.55] - 2026-10-08
 

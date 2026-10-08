@@ -15,7 +15,7 @@
     "url": "https://github.com/sebastienrousseau/noyalib-lsp/issues"
   },
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.91.0"
   },
   "categories": [
     "Programming Languages",
