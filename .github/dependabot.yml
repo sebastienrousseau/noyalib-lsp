@@ -17,6 +17,8 @@ updates:
       # noyalib bumps coordinated with parent release, not Dependabot
       # (ADR-0005 strict lockstep).
       - dependency-name: "noyalib"
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -31,3 +33,23 @@ updates:
       github-actions:
         patterns:
           - "*"
+    cooldown:
+      default-days: 7
+
+  # The VS Code extension's npm tree (vsce, esbuild, the language
+  # client). Without this entry nothing proposed updates for it.
+  - package-ecosystem: "npm"
+    directory: "/editors/vscode"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "javascript"]
+    groups:
+      vscode-extension:
+        patterns:
+          - "*"
+    cooldown:
+      default-days: 7

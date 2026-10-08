@@ -37,16 +37,16 @@ jobs:
   docs-strict:
     uses: sebastienrousseau/noyalib/.github/workflows/shared-rustdoc-strict.yml@a1a2c8e4e48106dd099bc47e52680a9775d852be
   verify-signatures:
-    uses: sebastienrousseau/noyalib/.github/workflows/shared-verify-signatures.yml@a1a2c8e4e48106dd099bc47e52680a9775d852be
+    uses: sebastienrousseau/noyalib/.github/workflows/shared-verify-signatures.yml@139a826ba273b8f9feffff54795711f4df321928
   test-matrix:
-    uses: sebastienrousseau/noyalib/.github/workflows/shared-test-matrix.yml@a1a2c8e4e48106dd099bc47e52680a9775d852be
+    uses: sebastienrousseau/noyalib/.github/workflows/shared-test-matrix.yml@139a826ba273b8f9feffff54795711f4df321928
 
   # ── A+ rigor parity with the core ──────────────────────────────────
   coverage-gate:
     # lsp measures 95.5%/97.3%/95.5% (regions/functions/lines),
     # clearing the core's 93/96/94 floor — including main.rs (the stdio
     # loop), so no honest-exclusion regex is needed.
-    uses: sebastienrousseau/noyalib/.github/workflows/shared-coverage.yml@a1a2c8e4e48106dd099bc47e52680a9775d852be
+    uses: sebastienrousseau/noyalib/.github/workflows/shared-coverage.yml@139a826ba273b8f9feffff54795711f4df321928
     with:
       ignore-filename-regex: ''
       fail-under-functions: 96
@@ -70,10 +70,12 @@ jobs:
       CARGO_TARGET_DIR: ${{ github.workspace }}/target-fuzz
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067 # master
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067
         with:
           toolchain: nightly
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: ". -> target-fuzz"
           key: fuzz-regression
@@ -100,14 +102,18 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "22"
       - name: Package
         working-directory: editors/vscode
         run: |
-          npm ci --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
           npm run check
+          npm test
+          npm audit --audit-level=moderate
           npx --no-install vsce package
           ls -l ./*.vsix
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -116,3 +122,13 @@ jobs:
           path: editors/vscode/*.vsix
           if-no-files-found: error
 
+  # ── Workflow gates shared with the core (v0.0.55) ───────────────────
+  # actionlint: workflow files are well-formed (shellcheck included).
+  # zizmor: workflow security audit, failing at medium and above.
+  # single-publisher: only release.yml may publish anything.
+  actionlint:
+    uses: sebastienrousseau/noyalib/.github/workflows/shared-actionlint.yml@139a826ba273b8f9feffff54795711f4df321928
+  zizmor:
+    uses: sebastienrousseau/noyalib/.github/workflows/shared-zizmor.yml@139a826ba273b8f9feffff54795711f4df321928
+  single-publisher:
+    uses: sebastienrousseau/noyalib/.github/workflows/shared-single-publisher.yml@139a826ba273b8f9feffff54795711f4df321928

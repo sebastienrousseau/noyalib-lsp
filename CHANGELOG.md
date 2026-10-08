@@ -11,6 +11,41 @@ and versions in lockstep with the
 [`noyalib`](https://github.com/sebastienrousseau/noyalib) core crate —
 see that repository's `CHANGELOG.md` for the release-wide notes.
 
+## [v0.0.55] - 2026-10-08
+
+### Changed
+
+- Tracks `noyalib` 0.0.55 under the exact lockstep pin.
+
+### Fixed
+
+- A malformed frame no longer stops the server: a `Content-Length` near
+  `u64::MAX` (which overflowed and panicked), a body that is not UTF-8
+  (which exited the server) or a header without a length is answered
+  with a JSON-RPC parse error (-32700) and the server reads the next
+  message. Messages over 256 MiB are refused and skipped unread.
+- `textDocument/formatting` returns a range that ends exactly at the end
+  of the document, after the final newline and counted in UTF-16 code
+  units. It used to stop before the final newline, so applying the edit
+  left a duplicate blank line, and counted bytes on the last line.
+- The VS Code extension no longer lets an opened folder choose what it
+  runs: `noyalib.path` is a `machine-overridable` setting that VS Code
+  ignores in untrusted workspaces (the extension declares limited
+  support for them), relative paths are refused, and the server starts
+  in the home directory instead of the workspace. `npm test` in
+  `editors/vscode` covers the path rules and the manifest.
+- `textDocument/hover` with a column near `usize::MAX` reports nothing
+  instead of overflowing the offset sum, which panicked debug builds and
+  wrapped in release builds.
+
+### Security
+
+- The VS Code extension's packaging tool moves to `@vscode/vsce` 4.0.0,
+  which drops the `secretlint`/`globby` chain that pulled in `braces`
+  (GHSA-vfj7-8cjw-p6xm) and `fast-uri` 3.1.7 (GHSA-hrr3-gc8f-f4qj);
+  `npm audit` reports 0 vulnerabilities. Both were build-time only and
+  never shipped in the VSIX.
+
 ## [v0.0.54] - 2026-10-07
 
 ### Changed
