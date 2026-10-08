@@ -60,6 +60,26 @@ Each release ships with:
    published `.crate`.
 3. SBOM attached to each GitHub Release.
 
+### Verifying a release
+
+Pin the workflow and the tag, not just the repository: an attestation
+or signature from any other workflow, or from a branch, must not pass.
+
+```sh
+# SLSA provenance (any release asset)
+gh attestation verify <artefact> \
+  --repo sebastienrousseau/noyalib-lsp \
+  --signer-workflow sebastienrousseau/noyalib-lsp/.github/workflows/release.yml \
+  --source-ref refs/tags/vX.Y.Z \
+  --deny-self-hosted-runners
+
+# Keyless sigstore signature (.crate and SBOM, with its .bundle)
+cosign verify-blob \
+  --certificate-identity-regexp '^https://github\.com/sebastienrousseau/noyalib-lsp/\.github/workflows/release\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --bundle <artefact>.bundle <artefact>
+```
+
 ### Detached GPG signatures
 
 Additive to the sigstore signing above, not a replacement. Keyless
