@@ -80,11 +80,11 @@
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^10.1.2"
   },
   "devDependencies": {
     "@vscode/vsce": "^4.0.0",
-    "esbuild": "^0.25.0"
+    "esbuild": "^0.28.2"
   },
   "icon": "icon.png"
 }
