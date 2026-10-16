@@ -16,7 +16,7 @@
   <a href="https://docs.rs/noyalib-lsp"><img src="https://img.shields.io/badge/docs.rs-noyalib--lsp-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" alt="Docs" /></a>
   <a href="https://scorecard.dev/viewer/?uri=github.com/sebastienrousseau/noyalib-lsp"><img src="https://img.shields.io/ossf-scorecard/github.com/sebastienrousseau/noyalib-lsp?style=for-the-badge&label=OpenSSF%20Scorecard&logo=openssf" alt="OpenSSF Scorecard" /></a>
   <a href="LICENSE-APACHE"><img src="https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue.svg?style=for-the-badge" alt="License: Apache-2.0 OR MIT" /></a>
-  <a href="https://github.com/sebastienrousseau/noyalib-lsp/blob/main/docs/POLICIES.md"><img src="https://img.shields.io/badge/MSRV-1.86.0-93450a.svg?style=for-the-badge&logo=rust" alt="MSRV 1.86.0" /></a>
+  <a href="https://github.com/sebastienrousseau/noyalib-lsp/blob/main/docs/POLICIES.md"><img src="https://img.shields.io/badge/MSRV-1.89.0-93450a.svg?style=for-the-badge&logo=rust" alt="MSRV 1.89.0" /></a>
 </p>
 
 ---
@@ -59,7 +59,7 @@
 
 ```toml
 [dependencies]
-noyalib-lsp = "0.0.57"
+noyalib-lsp = "0.0.58"
 ```
 
 Install the language-server binary with Cargo:
@@ -75,14 +75,14 @@ Other LSP clients start the `noyalib-lsp` binary over stdio.
 
 ## Requirements
 
-- Rust **1.86.0 or newer** when building from source.
+- Rust **1.89.0 or newer** when building from source.
 - Linux, macOS, and Windows are tested on stable, beta, and nightly Rust.
 - An editor or client supporting LSP 3.17 over `Content-Length` framed stdio.
-- The server pins `noyalib` at exactly `=0.0.57`.
+- The server pins `noyalib` at exactly `=0.0.58`.
 
 | Surface | Minimum toolchain | Enforcement |
 | :--- | :---: | :--- |
-| Server and library | Rust 1.86.0 | manifest and MSRV CI |
+| Server and library | Rust 1.89.0 | manifest and MSRV CI |
 | VS Code extension | Declared Node runtime | extension build CI |
 
 ---
