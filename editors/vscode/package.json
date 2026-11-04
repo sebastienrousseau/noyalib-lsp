@@ -86,5 +86,8 @@
     "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.28.2"
   },
-  "icon": "icon.png"
+  "icon": "icon.png",
+  "overrides": {
+    "minimatch": "^11.0.1"
+  }
 }
