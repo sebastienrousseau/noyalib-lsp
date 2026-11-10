@@ -1,8 +1,8 @@
 {
   "name": "noyalib",
   "displayName": "noyalib YAML",
-  "description": "YAML diagnostics, formatting and schema hover from the noyalib language server.",
-  "version": "0.0.60",
+  "description": "YAML parse diagnostics, formatting and document-type hover from the noyalib language server.",
+  "version": "0.0.61",
   "publisher": "sebastienrousseau",
   "license": "Apache-2.0 OR MIT",
   "repository": {

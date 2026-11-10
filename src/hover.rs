@@ -48,32 +48,35 @@ pub fn hover_at(text: &str, line: usize, column: usize) -> JsonValue {
     })
 }
 
-/// Convert an LSP `(line, column)` zero-based position into a byte
-/// offset. Returns `None` when the position is out of range.
+/// Convert a zero-based LSP `(line, column)` using UTF-16 code units into
+/// a UTF-8 byte offset. Returns `None` outside the requested line or inside
+/// a surrogate pair. CRLF, LF and CR each delimit one line.
 pub fn byte_offset_of(text: &str, line: usize, column: usize) -> Option<usize> {
-    let mut current_line = 0usize;
-    let mut line_start = 0usize;
-    for (i, b) in text.bytes().enumerate() {
-        if current_line == line {
-            return offset_within(text, line_start, column);
+    let mut remaining = text;
+    let mut line_start = 0;
+    for _ in 0..line {
+        let end = remaining.find(['\r', '\n'])?;
+        let break_len = if remaining[end..].starts_with("\r\n") {
+            2
+        } else {
+            1
+        };
+        line_start += end + break_len;
+        remaining = &remaining[end + break_len..];
+    }
+    let end = remaining.find(['\r', '\n']).unwrap_or(remaining.len());
+    let line_text = &remaining[..end];
+    let mut units = 0;
+    for (offset, character) in line_text.char_indices() {
+        if units == column {
+            return Some(line_start + offset);
         }
-        if b == b'\n' {
-            current_line += 1;
-            line_start = i + 1;
+        units += character.len_utf16();
+        if units > column {
+            return None;
         }
     }
-    if current_line == line {
-        return offset_within(text, line_start, column);
-    }
-    None
-}
-
-/// `line_start + column` when it lands inside `text`. A client-supplied
-/// column can be any `u32`/`usize`, so the sum is checked.
-fn offset_within(text: &str, line_start: usize, column: usize) -> Option<usize> {
-    line_start
-        .checked_add(column)
-        .filter(|&target| target <= text.len())
+    (units == column).then_some(line_start + line_text.len())
 }
 
 fn type_name(v: &noyalib::Value) -> &'static str {
@@ -91,6 +94,30 @@ fn type_name(v: &noyalib::Value) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bare_cr_and_empty_final_lines_have_protocol_positions() {
+        assert_eq!(byte_offset_of("a\rb", 1, 1), Some(3));
+        assert_eq!(byte_offset_of("a\r\n", 1, 0), Some(3));
+        assert_eq!(byte_offset_of("a\r\n", 2, 0), None);
+        assert_eq!(byte_offset_of("", 0, 0), Some(0));
+    }
+
+    #[test]
+    fn positions_count_utf16_units_and_stay_on_the_requested_line() {
+        let text = "😀a\r\nb: 1\n";
+        assert_eq!(byte_offset_of(text, 0, 2), Some(4));
+        assert_eq!(byte_offset_of(text, 0, 3), Some(5));
+        assert_eq!(byte_offset_of(text, 0, 4), None);
+        assert_eq!(byte_offset_of(text, 0, 1), None);
+        assert_eq!(byte_offset_of(text, 1, 0), Some(7));
+    }
+
+    #[test]
+    fn ascii_columns_cannot_spill_into_the_next_line() {
+        assert_eq!(byte_offset_of("a\nb: 1", 0, 2), None);
+        assert_eq!(hover_at("a\nb: 1", 0, 2), JsonValue::Null);
+    }
 
     #[test]
     fn hover_describes_a_multi_document_stream() {

@@ -344,9 +344,7 @@ checksum = "c2a86d3146ed3995b5913c414f6664344b9617457320782e64f0bb44afd49d74"
 
 [[package]]
 name = "noyalib"
-version = "0.0.60"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4f58e0d7f94aac1ff656e07a05512093b0a0f866f5778f94e84909f50fc3157"
+version = "0.0.61"
 dependencies = [
  "hashbrown",
  "indexmap",
@@ -361,7 +359,7 @@ dependencies = [
 
 [[package]]
 name = "noyalib-lsp"
-version = "0.0.60"
+version = "0.0.61"
 dependencies = [
  "noyalib",
  "serde",

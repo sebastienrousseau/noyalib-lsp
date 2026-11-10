@@ -11,6 +11,20 @@ and versions in lockstep with the
 [`noyalib`](https://github.com/sebastienrousseau/noyalib) core crate —
 see that repository's `CHANGELOG.md` for the release-wide notes.
 
+## [v0.0.61] - Unreleased
+
+### Changed
+
+- Prepare the next lockstep version for the ecosystem assurance work.
+  Release dates and completed changes are recorded after verification.
+
+### Fixed
+
+- Honor UTF-16 hover positions and individual line boundaries.
+- Enforce initialization, ignore stale buffer changes, and exit promptly
+  with the protocol status. Reject oversized terminated headers.
+- Document the supported capability set and exercise it with Neovim.
+
 ## [v0.0.60] - 2026-11-10
 
 ### Changed

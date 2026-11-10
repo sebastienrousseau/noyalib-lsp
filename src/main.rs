@@ -68,7 +68,7 @@ fn main() -> ExitCode {
         }
     }
     match run() {
-        Ok(()) => ExitCode::SUCCESS,
+        Ok(status) => status,
         Err(e) => {
             eprintln!("noyalib-lsp: {e}");
             ExitCode::from(3)
@@ -76,7 +76,7 @@ fn main() -> ExitCode {
     }
 }
 
-fn run() -> io::Result<()> {
+fn run() -> io::Result<ExitCode> {
     serve(io::stdin().lock(), io::stdout().lock())
 }
 
@@ -87,46 +87,104 @@ const MAX_MESSAGE: usize = 256 * 1024 * 1024;
 /// Largest header block accepted before its terminating blank line.
 const MAX_HEADER: usize = 8 * 1024;
 
-/// Serve LSP messages from `input` until EOF, writing replies to `out`.
+/// Serve LSP messages until the exit notification or end of input.
 ///
 /// A malformed frame (no or an unparseable `Content-Length`, a declared
 /// length over [`MAX_MESSAGE`], an oversized header, a body that is not
 /// UTF-8) is answered with a JSON-RPC parse error (`-32700`, `id: null`)
 /// and the server carries on with the next message.
-fn serve(mut input: impl Read, mut out: impl Write) -> io::Result<()> {
+fn serve(mut input: impl Read, mut out: impl Write) -> io::Result<ExitCode> {
     let mut server = Server::new();
     let mut framer = Framer::new(MAX_MESSAGE);
     let mut buf = [0u8; 4096];
+    let mut shutdown = false;
     loop {
         let n = input.read(&mut buf)?;
         if n == 0 {
-            return Ok(());
+            return Ok(ExitCode::SUCCESS);
         }
         framer.push(&buf[..n]);
         while let Some(frame) = framer.next_frame() {
-            for message in respond(&mut server, frame) {
+            let (messages, control) = respond(&mut server, frame);
+            for message in messages {
                 write_message(&mut out, &message)?;
             }
             out.flush()?;
+            match control {
+                Control::None => {}
+                Control::Shutdown => shutdown = true,
+                Control::Exit => return Ok(ExitCode::from(u8::from(!shutdown))),
+            }
         }
     }
 }
 
-/// The messages to send back for one frame.
-fn respond(server: &mut Server, frame: Frame) -> Vec<String> {
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Control {
+    None,
+    Shutdown,
+    Exit,
+}
+
+#[derive(serde::Deserialize)]
+struct ControlEnvelope {
+    jsonrpc: String,
+    method: String,
+    id: Option<serde::de::IgnoredAny>,
+}
+
+fn control_message(text: &str) -> Control {
+    // Only lifecycle candidates need the small envelope inspection. Match
+    // escaped spellings too, while ordinary edits avoid another JSON parse.
+    if !text.contains("\"shutdown\"") && !text.contains("\"exit\"") && !text.contains("\\u") {
+        return Control::None;
+    }
+    let Ok(message) = serde_json::from_str::<ControlEnvelope>(text) else {
+        return Control::None;
+    };
+    if message.jsonrpc != "2.0" {
+        return Control::None;
+    }
+    match (message.method.as_str(), message.id.is_some()) {
+        ("exit", false) => Control::Exit,
+        ("shutdown", true) => Control::Shutdown,
+        _ => Control::None,
+    }
+}
+
+/// Messages and any accepted lifecycle transition for one frame.
+fn respond(server: &mut Server, frame: Frame) -> (Vec<String>, Control) {
     let body = match frame {
-        Frame::Refused(why) => return vec![parse_error(&why)],
+        Frame::Refused(why) => return (vec![parse_error(&why)], Control::None),
         Frame::Body(bytes) => bytes,
     };
     let Ok(text) = std::str::from_utf8(&body) else {
-        return vec![parse_error("message body is not valid UTF-8")];
+        return (
+            vec![parse_error("message body is not valid UTF-8")],
+            Control::None,
+        );
     };
+    let mut control = control_message(text);
     let outcome = server.handle_message(text);
-    outcome
-        .reply
-        .into_iter()
-        .chain(outcome.notifications)
-        .collect()
+    if control == Control::Exit && outcome.reply.is_some() {
+        control = Control::None;
+    }
+    if control == Control::Shutdown
+        && !outcome.reply.as_deref().is_some_and(|reply| {
+            serde_json::from_str::<serde_json::Value>(reply)
+                .is_ok_and(|response| response.get("result").is_some())
+        })
+    {
+        control = Control::None;
+    }
+    (
+        outcome
+            .reply
+            .into_iter()
+            .chain(outcome.notifications)
+            .collect(),
+        control,
+    )
 }
 
 fn parse_error(why: &str) -> String {
@@ -202,6 +260,12 @@ impl Framer {
         };
         let declared = content_length(&self.pending[..header_end]);
         self.pending.drain(..header_end);
+        if header_end > MAX_HEADER {
+            if let Some(length) = declared {
+                self.discard(length);
+            }
+            return Some(Err(Frame::Refused("header too large".into())));
+        }
         match declared {
             None => Some(Err(Frame::Refused(
                 "missing or invalid Content-Length".into(),
@@ -298,6 +362,20 @@ mod tests {
         let got = frames(&mut f, &vec![b'x'; MAX_HEADER + 1]);
         assert!(matches!(&got[..], [Frame::Refused(_)]), "{got:?}");
         assert!(f.pending.is_empty());
+    }
+
+    #[test]
+    fn an_oversized_header_with_a_terminator_does_not_deliver_its_body() {
+        let mut f = Framer::new(MAX_MESSAGE);
+        let input = format!(
+            "X-Large: {}\r\nContent-Length: 2\r\n\r\nbdContent-Length: 2\r\n\r\nok",
+            "x".repeat(MAX_HEADER)
+        );
+        let got = frames(&mut f, input.as_bytes());
+        assert!(
+            matches!(&got[..], [Frame::Refused(_), Frame::Body(body)] if body == b"ok"),
+            "{got:?}"
+        );
     }
 
     #[test]

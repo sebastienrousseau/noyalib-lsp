@@ -7,7 +7,7 @@
 <h1 align="center">noyalib-lsp</h1>
 
 <p align="center">
-  A YAML language server providing formatting, diagnostics, document symbols, and schema-aware hover over standard LSP.
+  A YAML language server providing comment-preserving formatting, parse diagnostics, and document-type hover over standard LSP.
 </p>
 
 <p align="center">
@@ -53,13 +53,19 @@
 
 ---
 
+## Development version
+
+This branch prepares unreleased v0.0.61. Versioned Cargo examples describe
+that upcoming release; use a published version for registry installation
+until it ships. Local verification uses the sibling core source explicitly.
+
 ## Install
 
 ### As a Rust library
 
 ```toml
 [dependencies]
-noyalib-lsp = "0.0.60"
+noyalib-lsp = "0.0.61"
 ```
 
 Install the language-server binary with Cargo:
@@ -122,7 +128,7 @@ The server is the editor-facing member of the lockstep noyalib family.
 | :--- | :--- | :--- |
 | `noyalib-lsp` | Standard LSP server | Any LSP-aware editor |
 | `editors/vscode` | VS Code extension | Packaged VS Code integration |
-| [`noyalib`](https://github.com/sebastienrousseau/noyalib) | Parser, CST, and schema engine | Formatting and diagnostics |
+| [`noyalib`](https://github.com/sebastienrousseau/noyalib) | Parser and CST engine | Formatting and parse diagnostics |
 | [`noya-cli`](https://github.com/sebastienrousseau/noya-cli) | Batch formatter and validator | Shell and CI workflows |
 
 ---
@@ -132,10 +138,10 @@ The server is the editor-facing member of the lockstep noyalib family.
 | Area | Capability | Status |
 | :--- | :--- | :--- |
 | Synchronisation | Open, change, save, and close documents | Stable |
-| Diagnostics | YAML parse and schema diagnostics | Stable |
+| Diagnostics | YAML parse errors across all documents in a buffer | Supported |
 | Formatting | Full-document CST-backed edits | Stable |
-| Navigation | Document symbols | Stable |
-| Assistance | Hover and completion from JSON Schema | Stable |
+| Navigation | Document symbols and completion | Unsupported |
+| Assistance | Document type and parse-error hover | Supported |
 | Transport | Standard stdio LSP framing | Stable |
 
 ---
@@ -147,7 +153,7 @@ does not bundle a remote schema catalogue.
 
 | Project | Lossless formatter | Schema hover | Bundled catalogue |
 | :--- | :---: | :---: | :---: |
-| **noyalib-lsp** | Yes | Yes | No |
+| **noyalib-lsp** | Yes | No | No |
 | `yaml-language-server` | Reprints | Yes | Yes |
 | Generic formatter integration | Tool-dependent | No | No |
 
@@ -174,8 +180,8 @@ See [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) for methodology and full results.
 
 - Publish diagnostics after document changes.
 - Format documents through noyalib's comment-preserving CST.
-- Return schema-backed hover and completion data.
-- Enumerate document symbols for mappings and sequences.
+- Return document-type and parse-error hover information.
+- Report unsupported requests with the standard method-not-found error.
 - Run in VS Code, Zed, Neovim, Helix, Emacs, and Sublime Text.
 - Expose a Rust library for protocol and handler integration tests.
 
@@ -183,7 +189,8 @@ See [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md) for methodology and full results.
 
 ## Configuration
 
-The server consumes editor-provided initialization options and schema mappings.
+The server uses full-document synchronisation. Schema mappings, completion,
+document symbols and schema-aware hover are not implemented.
 Editor-specific JSON and Lua examples are maintained in
 [`docs/editor-setup.md`](docs/editor-setup.md). Protocol coverage is tracked in
 [`docs/protocol-coverage.md`](docs/protocol-coverage.md).
@@ -194,7 +201,7 @@ Editor-specific JSON and Lua examples are maintained in
 
 - [`handshake.sh`](examples/handshake.sh): raw LSP initialization.
 - [`format-on-save.sh`](examples/format-on-save.sh): formatting request flow.
-- [`hover-cursor.sh`](examples/hover-cursor.sh): schema-aware hover.
+- [`hover-cursor.sh`](examples/hover-cursor.sh): document-type hover.
 
 The examples speak framed JSON-RPC directly and can be run against a local
 debug or release binary.

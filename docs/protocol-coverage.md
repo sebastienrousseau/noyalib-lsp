@@ -1,132 +1,77 @@
+<!-- SPDX-FileCopyrightText: 2026 Noyalib -->
+<!-- SPDX-License-Identifier: MIT OR Apache-2.0 -->
+
 # LSP protocol coverage
 
-Which LSP methods `noyalib-lsp` implements, which it acknowledges
-but treats as no-ops, and which it deliberately does not support.
-Coverage is conservative: every implemented method has end-to-end
-tests in `crates/noyalib-lsp/tests/` and behavioural tests
-exercising the JSON-RPC envelope.
+The server implements the following subset of LSP 3.17 over
+`Content-Length`-framed stdio. The source of truth is `src/lib.rs::dispatch`;
+`tests/protocol.rs` exercises the actual binary and `tests/framing.rs`
+exercises the framing boundary.
 
-LSP version targeted: **3.17**.
+## Implemented messages
 
-## Implemented
-
-| Method | Direction | Behaviour |
+| Method | Direction | Result |
 |---|---|---|
-| `initialize` | client → server | Returns server capabilities (formatting, hover, didOpen / didChange / didClose, publishDiagnostics) |
-| `initialized` | client → server | Acknowledged; server-side initialisation runs here |
-| `shutdown` | client → server | Acknowledged; server prepares for exit |
-| `exit` | notification | Server exits with code 0 (or 1 if shutdown was not requested) |
-| `textDocument/didOpen` | notification | Document tracked in the open-documents map; `publishDiagnostics` runs against the new content |
-| `textDocument/didChange` | notification | Document content updated; `publishDiagnostics` runs against the new content |
-| `textDocument/didClose` | notification | Document removed from the open-documents map |
-| `textDocument/formatting` | request | Returns a `TextEdit[]` that rewrites the document via `noyalib::cst::format`. Lossless: comments, anchors, indent style preserved |
-| `textDocument/hover` | request | Returns the parsed value type at the cursor; if a JSON Schema is associated with the document, returns the schema's `description` field for the value at the cursor path |
-| `textDocument/publishDiagnostics` | server → client | Emitted on every `didOpen` / `didChange`. Carries parse errors with span attached; carries schema-validation errors when a schema is associated |
+| `initialize` | Request | Formatting, hover and full-document sync capabilities; package version |
+| `initialized` | Notification | Accepted |
+| `shutdown` | Request | Begins shutdown; later requests are refused |
+| `exit` | Notification | Ends the process; lifecycle exit status is enforced by the binary |
+| `textDocument/didOpen` | Notification | Stores the buffer and publishes parse diagnostics |
+| `textDocument/didChange` | Notification | Replaces the whole buffer and republishes parse diagnostics; stale or duplicate versions are ignored |
+| `textDocument/didClose` | Notification | Removes the tracked buffer |
+| `textDocument/formatting` | Request | CST-backed full-document edits |
+| `textDocument/hover` | Request | Document type, cursor position or parse error; not schema descriptions |
+| `textDocument/publishDiagnostics` | Server notification | Parse diagnostics, including errors in later stream documents; an empty list clears stale errors |
 
-## Acknowledged but no-op
+Before `initialize`, requests receive `-32002` and notifications are ignored
+except `exit`. An exit after a successful shutdown returns code 0; exit
+without shutdown returns code 1, without waiting for the client to close
+stdin. The framer refuses oversized headers even when their terminator
+arrives in the same read.
 
-These method names are recognised so the client doesn't see "method
-not found" errors, but the server returns an empty result. They're
-candidates for future implementation when there's a proven user
-request.
+Unknown requests return JSON-RPC `-32601` (method not found). Unknown
+notifications have no response, as required by JSON-RPC. `didSave`,
+`didChangeConfiguration` and `didChangeWatchedFiles` have no handlers;
+they are not implemented configuration or file-watching features.
 
-| Method | Why no-op |
-|---|---|
-| `textDocument/didSave` | The CST formatter doesn't need a save signal — `didChange` already flushes |
-| `workspace/didChangeConfiguration` | No tunable configuration exposed yet; future `noyalib.fmt.indent` etc. will land here |
-| `workspace/didChangeWatchedFiles` | Diagnostics run on the open buffer; on-disk changes are picked up on the next `didOpen` |
+## Unsupported capabilities
 
-## Deliberately unsupported
+Completion, symbols, code actions, rename, references, definitions, folding,
+workspace symbols, schema validation and schema-aware hover are unsupported.
+The server neither downloads a schema catalogue nor consumes `yaml.schemas`
+or `$schema` pragmas. Use the core schema API or `noyavalidate` for schema
+validation. These limits apply even if another editor extension offers the
+same capabilities independently.
 
-| Method | Reason |
-|---|---|
-| `textDocument/completion` | YAML's grammar makes meaningful completions context-heavy. The LSP intentionally defers to the YAML schema-aware completion in editor extensions like `yaml-language-server` until we have a clear value proposition |
-| `textDocument/codeAction` | No quick-fix logic implemented yet. Schema validation errors carry recovery hints in their messages but no `WorkspaceEdit` |
-| `textDocument/rename` | Anchor / alias renaming is a real ask but requires careful handling of cross-document references; planned post-v0.0.1 |
-| `textDocument/references` | Same as rename — anchor reference graph |
-| `textDocument/definition` | Same family |
-| `textDocument/documentSymbol` | Outline view; planned but not yet implemented |
-| `textDocument/foldingRange` | Editors typically derive folding from indentation directly |
-| `workspace/symbol` | Cross-document symbols; out of scope for a YAML server |
+## Initialization contract
 
-Methods not listed above return `methodNotFound` per the LSP spec.
-
-## Diagnostic coverage
-
-`textDocument/publishDiagnostics` payloads are produced by:
-
-1. **Parse errors** — every `noyalib::Error::ParseWithLocation`
-   becomes a `Diagnostic` with severity `Error`, span attached.
-   See [crate noyalib's errors.md](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib/docs/errors.md)
-   for the full variant list.
-2. **Schema validation errors** — when a JSON Schema is
-   associated with the document (via the editor's schema-mapping
-   config or an inline `# yaml-language-server: $schema=...`
-   pragma), each violation becomes a `Diagnostic` with severity
-   `Warning`. The diagnostic's `code` field carries the schema
-   keyword that failed (`type`, `enum`, `required`, etc.).
-
-Diagnostics are produced eagerly on every `didOpen` / `didChange`.
-There is no debounce — the parser is fast enough that 10ms
-keystroke cadence on a 50KB document is comfortably under one
-event loop tick.
-
-## Capabilities advertised at `initialize`
+The capability object is:
 
 ```json
 {
-  "capabilities": {
-    "textDocumentSync": {
-      "openClose": true,
-      "change": 1
-    },
-    "documentFormattingProvider": true,
-    "hoverProvider": true,
-    "diagnosticProvider": {
-      "interFileDependencies": false,
-      "workspaceDiagnostics": false
-    }
-  },
-  "serverInfo": {
-    "name": "noyalib-lsp",
-    "version": "0.0.1"
-  }
+  "textDocumentSync": 1,
+  "documentFormattingProvider": true,
+  "hoverProvider": true
 }
 ```
 
-`textDocumentSync.change` is `1` (full-document sync). Incremental
-sync (`2`) would shave a small amount off the wire bandwidth on
-very large files but adds protocol complexity that hasn't paid off
-in benchmarks. Revisit if profiling shows it matters.
+`1` means full-document synchronization. `serverInfo.version` comes from
+`CARGO_PKG_VERSION`; it is not a separately hard-coded protocol version.
+The server does not advertise a pull-diagnostic provider or completion.
+Diagnostics use zero-based UTF-16 positions. Hover coordinates follow the
+same protocol encoding. The server reparses full buffers; performance claims
+require measured results in [BENCHMARKS.md](BENCHMARKS.md).
 
-## Where the JSON-RPC envelope is handled
+## Exercising the contract
 
-```text
-crates/noyalib-lsp/src/
-├── lib.rs                # Server type, handle_message dispatch
-├── main.rs               # stdio loop, main()
-├── format.rs             # textDocument/formatting handler
-├── hover.rs              # textDocument/hover handler
-└── diagnostics.rs        # publishDiagnostics builder
+```sh
+cargo test --test protocol --test framing
+bash examples/handshake.sh
 ```
 
-The dispatch in `lib.rs::handle_message` is a simple match on the
-incoming method name; each handler returns a `HandleOutcome`
-(`reply` / `notify` / `silent`) that tells the transport layer
-what to send back.
+The handshake example requires an installed `noyalib-lsp` on `PATH`; it
+frames initialization, shutdown and exit correctly. Raw newline-delimited
+JSON is not an LSP transport.
 
-## Testing
-
-| Suite | What it covers |
-|---|---|
-| `crates/noyalib-lsp/tests/protocol.rs` | End-to-end JSON-RPC round-trips (subprocess-driven; not run under llvm-cov) |
-| Per-handler unit tests in each `*.rs` | Direct handler invocation without the JSON-RPC envelope |
-| `crates/noyalib-lsp/benches/lsp_handlers.rs` | Per-handler latency on small + Kubernetes-shaped inputs |
-
-The full pyramid is documented in
-[`docs/TESTING.md`](https://github.com/sebastienrousseau/noyalib/blob/main/docs/TESTING.md).
-
-## Related
-
-- [Editor setup](./editor-setup.md) — wiring per editor
-- [Crate README](../README.md) — install + crate-level overview
+See [editor setup](editor-setup.md) for client configuration and
+[the README](../README.md) for the supported scope.

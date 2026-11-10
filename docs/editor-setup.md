@@ -28,16 +28,16 @@ from the Marketplace:
 ext install sebastienrousseau.noyalib
 ```
 
-The listing goes live with the first release published under the
-`sebastienrousseau` publisher. Until then, every CI run attaches a
-`.vsix` you can install with "Extensions: Install from VSIX…".
+Signed release VSIX files are also available from GitHub Releases for manual
+installation. The extension starts the binary selected by `noyalib.path`;
+install that binary separately and check its version.
 
 For a manual setup (e.g. you want to drive your own LSP client),
 add to `settings.json`:
 
 ```jsonc
 {
-  "yaml.server.path": "noyalib-lsp",
+  "noyalib.path": "noyalib-lsp",
   "[yaml]": {
     "editor.defaultFormatter": "sebastienrousseau.noyalib",
     "editor.formatOnSave": true
@@ -198,17 +198,14 @@ plugin, then in **Settings → LSP**:
 ## Verifying the server is working
 
 ```sh
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}' \
-  | noyalib-lsp
+noyalib-lsp --version
+bash examples/handshake.sh
 ```
 
-Should respond with a JSON-RPC `result` containing the server's
-capabilities. If it hangs or errors, verify:
-
-1. `which noyalib-lsp` returns a path
-2. The binary is executable (`chmod +x` if needed)
-3. The version matches your editor's expectations
-   (`noyalib-lsp --version`)
+Run the handshake from a source checkout after placing the installed binary
+on `PATH`. It sends valid Content-Length frames and should return the
+initialization capability response and shutdown response. See
+[protocol coverage](protocol-coverage.md) for the exact capability object.
 
 ## Troubleshooting
 
@@ -232,25 +229,20 @@ for YAML (some editors prefer the built-in tree-sitter formatter
 unless told otherwise — see each editor's section above for the
 explicit override).
 
-### Hover descriptions show `null`
+### Schema information is unavailable
 
-Hover content depends on a JSON Schema being available for the
-document. Configure the schema via the editor's standard YAML
-schema mapping (e.g. `yaml.schemas` in VS Code, or the
-[yaml-language-server schema selector](https://github.com/redhat-developer/yaml-language-server#using-inlined-schema)
-inline pragma). With no schema, hover returns the parsed value
-type only.
+Hover reports the overall document type or a parse error. Schema
+validation, schema descriptions, completion and document symbols are not
+implemented. Editor `yaml.schemas` settings do not enable those features
+in this server. Use `noyavalidate` or the core schema API for validation.
 
-### High CPU on large files
+### Large buffers use too much CPU
 
-Large YAML files (>10 MB) trigger a full-document re-parse on
-every keystroke under the default `didChange` debounce. Either:
-
-- Increase the debounce in your editor's LSP client settings
-- Use `--max-document-length` to refuse very large files
-- File an issue if the parse is structurally slow — the bench
-  numbers in `crates/noyalib-lsp/benches/lsp_handlers.rs` are the
-  reference
+Synchronization replaces and reparses the full buffer. Measure your workload
+with the handler benchmarks before making latency claims; see
+[`BENCHMARKS.md`](BENCHMARKS.md). The binary's `--help` lists supported
+resource options. Report a reproducible slow document with its size and
+server version instead of relying on undocumented debounce flags.
 
 ## Related
 
