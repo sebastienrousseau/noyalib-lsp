@@ -24,6 +24,7 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
 - Enforce initialization, ignore stale buffer changes, and exit promptly
   with the protocol status. Reject oversized terminated headers.
 - Document the supported capability set and exercise it with Neovim.
+- Start the installed VS Code extension without an unsupported `--stdio` flag.
 
 ## [v0.0.60] - 2026-11-10
 

@@ -249,3 +249,19 @@ server version instead of relying on undocumented debounce flags.
 - [Protocol coverage](./protocol-coverage.md) — which LSP methods
   are implemented
 - [Crate README](../README.md) — full server overview
+
+## Verify a packaged extension
+
+The installed extension can be tested in an isolated VS Code profile using
+the built VSIX and server binary. Set `VS_CODE_CLI` to the editor's command
+line launcher. On macOS, set `VS_CODE_BIN` to the application executable
+under `Contents/MacOS`.
+
+```sh
+node scripts/check-vscode-client.mjs path/to/noyalib.vsix path/to/noyalib-lsp
+```
+
+The check installs the VSIX, selects the specified binary, and exercises
+diagnostics, Unicode hover, formatting and restart. It prints the editor
+version and artifact digests. A local VSIX test does not verify the
+marketplace's copy of the extension.

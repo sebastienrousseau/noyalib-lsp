@@ -15,7 +15,7 @@
 
 const os = require("os");
 const vscode = require("vscode");
-const { LanguageClient, TransportKind } = require("vscode-languageclient/node");
+const { LanguageClient } = require("vscode-languageclient/node");
 const { resolveServerCommand, DEFAULT_COMMAND } = require("./server-command");
 
 let client;
@@ -25,7 +25,9 @@ function configuredCommand() {
 }
 
 function serverOptions(command) {
-  return { command, args: [], transport: TransportKind.stdio, options: { cwd: os.homedir() } };
+  // Executable options use stdio by default. An explicit transport makes
+  // the client append --stdio, which the noyalib-lsp CLI does not accept.
+  return { command, args: [], options: { cwd: os.homedir() } };
 }
 
 async function offerSettings(message) {
