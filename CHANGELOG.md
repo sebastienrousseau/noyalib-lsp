@@ -15,6 +15,8 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
 
 ### Changed
 
+- Update the VS Code packager to VSCE 4.1.0, contributed by Dependabot
+  in #115; extension tests, VSIX packaging and npm audit pass.
 - Preserve unsigned radix string keys during serialization. Escalate CST
   root shape changes to a full parse to preserve UTF-8 token boundaries.
 - Core parsing now preserves anchor declaration order and clips only a
