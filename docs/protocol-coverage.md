@@ -27,7 +27,10 @@ Before `initialize`, requests receive `-32002` and notifications are ignored
 except `exit`. An exit after a successful shutdown returns code 0; exit
 without shutdown returns code 1, without waiting for the client to close
 stdin. The framer refuses oversized headers even when their terminator
-arrives in the same read.
+arrives in the same read. Header names match ASCII case-insensitively,
+including lower, upper and mixed-case `Content-Length`. This follows the
+[HTTP header semantics in LSP 3.17](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/lsp/3.17/specification.md#header-part).
+Three actual-server initialization regressions cover those spellings.
 
 Unknown requests return JSON-RPC `-32601` (method not found). Unknown
 notifications have no response, as required by JSON-RPC. `didSave`,

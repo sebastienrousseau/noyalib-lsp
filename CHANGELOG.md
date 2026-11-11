@@ -29,6 +29,9 @@ see that repository's `CHANGELOG.md` for the release-wide notes.
 
 ### Fixed
 
+- Accept lower, upper and mixed-case `Content-Length` header names over
+  stdio, following LSP header semantics. Three actual-server regressions
+  reproduce the previous parse errors.
 - Honor UTF-16 hover positions and individual line boundaries.
 - Enforce initialization, ignore stale buffer changes, and exit promptly
   with the protocol status. Reject oversized terminated headers.

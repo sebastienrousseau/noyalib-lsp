@@ -293,8 +293,12 @@ impl Framer {
 fn content_length(header: &[u8]) -> Option<usize> {
     let header = std::str::from_utf8(header).ok()?;
     header.lines().find_map(|line| {
-        line.strip_prefix("Content-Length:")
-            .and_then(|n| n.trim().parse::<usize>().ok())
+        let (name, value) = line.split_once(':')?;
+        if name.eq_ignore_ascii_case("Content-Length") {
+            value.trim().parse::<usize>().ok()
+        } else {
+            None
+        }
     })
 }
 
