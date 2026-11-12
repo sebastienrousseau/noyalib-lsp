@@ -389,7 +389,7 @@ mod tests {
         input.extend(format!("Content-Length: {}\r\n\r\n", init.len()).as_bytes());
         input.extend(init);
         let mut out = Vec::new();
-        serve(&input[..], &mut out).unwrap();
+        assert_eq!(serve(&input[..], &mut out).unwrap(), ExitCode::SUCCESS);
         let out = String::from_utf8(out).unwrap();
         assert!(out.contains("-32700"), "{out}");
         assert!(out.contains("capabilities"), "{out}");
