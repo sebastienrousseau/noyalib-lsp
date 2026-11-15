@@ -11,6 +11,18 @@ and versions in lockstep with the
 [`noyalib`](https://github.com/sebastienrousseau/noyalib) core crate —
 see that repository's `CHANGELOG.md` for the release-wide notes.
 
+## [v0.0.62] - Unreleased
+
+### Changed
+
+- **Breaking:** the core refuses a byte order mark (U+FEFF) inside plain
+  and block scalars and comments, as YAML 1.2.2 requires; quoted scalars
+  and a document prefix keep it. The server reports such a document as a
+  parse diagnostic.
+- **Breaking:** error paths bracket sequence indices (`items[0].name`,
+  was `items.0.name`).
+- The exact core pin and the VS Code extension advance to 0.0.62.
+
 ## [v0.0.61] - Unreleased
 
 ### Changed

@@ -173,6 +173,23 @@ mod tests {
         assert_eq!(diags.len(), 1);
     }
 
+    /// YAML 1.2.2 production 27 leaves the byte order mark out of
+    /// plain text (noyalib v0.0.62): the server flags one there, on the
+    /// line that holds it, and keeps one inside a quoted scalar.
+    #[test]
+    fn a_byte_order_mark_in_plain_text_is_a_diagnostic() {
+        let d = collect("a: 1\nb: x\u{feff}y\n");
+        assert_eq!(d.len(), 1);
+        assert_eq!(d[0]["range"]["start"]["line"].as_u64(), Some(1));
+        assert!(
+            d[0]["message"]
+                .as_str()
+                .unwrap()
+                .contains("byte order mark")
+        );
+        assert!(collect("a: 1\nb: \"x\u{feff}y\"\n").is_empty());
+    }
+
     #[test]
     fn diagnostic_range_is_well_formed() {
         let d = collect("a: [\n");
