@@ -79,27 +79,11 @@
 //! Full posture:
 //! [`SECURITY.md`](https://github.com/sebastienrousseau/noyalib/blob/main/SECURITY.md).
 //!
-//! # API stability and SemVer
+//! # API stability and versioning
 //!
-//! Pre-1.0 (`0.0.x`): the LSP wire contract (method names,
-//! capability flags, JSON-RPC error code ranges, document store
-//! semantics) is **stable** within a 0.0.x line — bug fixes
-//! only. Adding a new LSP capability is allowed within a 0.0.x
-//! bump; removing or repurposing one is held to a 0.x bump
-//! (e.g. 0.0.x → 0.1.0). The Rust library surface (`Server`,
-//! `HandleOutcome`, `Request`, `Response`, `ErrorResponse`) is
-//! covered by the workspace SemVer policy in
-//! [`POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/docs/POLICIES.md#2-semver--api-stability).
-//! `cargo-semver-checks` runs in CI on every PR.
-//!
-//! # Documentation
-//!
-//! - **Engineering policies** — workspace [`POLICIES.md`](https://github.com/sebastienrousseau/noyalib/blob/main/docs/POLICIES.md).
-//! - **LSP specification**: <https://microsoft.github.io/language-server-protocol/>.
-//! - **Editor configurations** (VS Code / Neovim / Helix /
-//!   Emacs / Zed / Sublime / IntelliJ):
-//!   [`examples/`](https://github.com/sebastienrousseau/noyalib/tree/main/crates/noyalib-lsp/examples).
-//! - **Protocol-method coverage matrix**: [`docs/protocol-coverage.md`](https://github.com/sebastienrousseau/noyalib/blob/main/crates/noyalib-lsp/doc/protocol-coverage.md).
+//! The family increments strictly by +0.0.1 in lockstep. Changes to
+//! parsing behavior, wire/output shapes or exported interfaces are breaking
+//! changes on that axis and must be documented under the family policy.
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
@@ -245,12 +229,18 @@ impl HandleOutcome {
 #[derive(Debug, Default)]
 pub struct Server {
     /// Documents the client has opened, keyed by URI.
-    documents: HashMap<String, String>,
-    /// Whether the client has issued `initialize` / `initialized`.
+    documents: HashMap<String, OpenDocument>,
+    /// Whether the client has sent a valid `initialize` request.
     initialized: bool,
     /// Whether the client has issued `shutdown`. After shutdown the
     /// server only honours `exit`.
     shutting_down: bool,
+}
+
+#[derive(Debug)]
+struct OpenDocument {
+    text: String,
+    version: Option<i64>,
 }
 
 impl Server {
@@ -294,7 +284,9 @@ impl Server {
     /// ```
     #[must_use]
     pub fn document(&self, uri: &str) -> Option<&str> {
-        self.documents.get(uri).map(String::as_str)
+        self.documents
+            .get(uri)
+            .map(|document| document.text.as_str())
     }
 
     /// Process one parsed JSON-RPC line and return the resulting
@@ -328,6 +320,16 @@ impl Server {
                 "invalid request: jsonrpc must be \"2.0\"".into(),
             ));
         }
+        if req.id.is_none() && matches!(req.method.as_str(), "initialize" | "shutdown") {
+            return HandleOutcome::silent();
+        }
+        if let Some(id) = req.id.as_ref().filter(|_| req.method == "exit") {
+            return HandleOutcome::reply(error_str(
+                id.clone(),
+                -32600,
+                "exit must be a notification".into(),
+            ));
+        }
         let id = req.id.clone();
         let result = self.dispatch(&req.method, req.params);
 
@@ -358,11 +360,17 @@ impl Server {
     }
 
     fn dispatch(&mut self, method: &str, params: JsonValue) -> Result<DispatchOk, (i32, String)> {
+        if !self.initialized && !matches!(method, "initialize" | "exit") {
+            return Err((-32002, "server has not been initialized".into()));
+        }
         if self.shutting_down && method != "exit" {
             return Err((-32600, format!("server is shutting down; refused {method}")));
         }
         match method {
             "initialize" => {
+                if self.initialized {
+                    return Err((-32600, "server is already initialized".into()));
+                }
                 self.initialized = true;
                 Ok(DispatchOk::value(json!({
                     "capabilities": {
@@ -396,11 +404,19 @@ impl Server {
         let text = params
             .pointer("/textDocument/text")
             .and_then(|v| v.as_str())
-            .unwrap_or_default()
-            .to_owned();
-        let _ = self.documents.insert(uri.clone(), text.clone());
+            .unwrap_or_default();
+        let version = params
+            .pointer("/textDocument/version")
+            .and_then(|v| v.as_i64());
+        let _ = self.documents.insert(
+            uri.clone(),
+            OpenDocument {
+                text: text.to_owned(),
+                version,
+            },
+        );
         let mut ok = DispatchOk::value(JsonValue::Null);
-        if let Some(note) = diagnostics::publish_diagnostics(&uri, &text) {
+        if let Some(note) = diagnostics::publish_diagnostics(&uri, text) {
             ok.notifications.push(note);
         }
         Ok(ok)
@@ -408,16 +424,29 @@ impl Server {
 
     fn did_change(&mut self, params: JsonValue) -> Result<DispatchOk, (i32, String)> {
         let uri = uri_from_params(&params).ok_or((-32602, "missing textDocument.uri".into()))?;
-        // LSP TextDocumentSyncKind::Full — the client sends the
-        // entire new text in `contentChanges[0].text`.
+        let document = self
+            .documents
+            .get_mut(&uri)
+            .ok_or((-32602, format!("document not open: {uri}")))?;
+        let version = params
+            .pointer("/textDocument/version")
+            .and_then(|v| v.as_i64());
+        let mut ok = DispatchOk::value(JsonValue::Null);
+        if version
+            .zip(document.version)
+            .is_some_and(|(new, current)| new <= current)
+        {
+            return Ok(ok);
+        }
+        // Full synchronization replaces the entire previous snapshot.
         let text = params
             .pointer("/contentChanges/0/text")
             .and_then(|v| v.as_str())
-            .ok_or((-32602, "missing contentChanges[0].text".into()))?
-            .to_owned();
-        let _ = self.documents.insert(uri.clone(), text.clone());
-        let mut ok = DispatchOk::value(JsonValue::Null);
-        if let Some(note) = diagnostics::publish_diagnostics(&uri, &text) {
+            .ok_or((-32602, "missing contentChanges[0].text".into()))?;
+        document.text.clear();
+        document.text.push_str(text);
+        document.version = version.or(document.version);
+        if let Some(note) = diagnostics::publish_diagnostics(&uri, text) {
             ok.notifications.push(note);
         }
         Ok(ok)
@@ -435,7 +464,7 @@ impl Server {
             .documents
             .get(&uri)
             .ok_or((-32602, format!("document not open: {uri}")))?;
-        let edits = format::full_document_edits(text)
+        let edits = format::full_document_edits(&text.text)
             .map_err(|e| (-32603, format!("format failed: {e}")))?;
         Ok(DispatchOk::value(serde_json::to_value(edits).unwrap()))
     }
@@ -454,7 +483,7 @@ impl Server {
             .documents
             .get(&uri)
             .ok_or((-32602, format!("document not open: {uri}")))?;
-        Ok(DispatchOk::value(hover::hover_at(text, line, column)))
+        Ok(DispatchOk::value(hover::hover_at(&text.text, line, column)))
     }
 }
 
@@ -549,9 +578,16 @@ mod tests {
         );
     }
 
+    fn initialized_server() -> Server {
+        let mut server = Server::new();
+        let init = server.handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#);
+        assert!(init.reply.is_some());
+        server
+    }
+
     #[test]
     fn unknown_method_returns_method_not_found() {
-        let mut s = Server::new();
+        let mut s = initialized_server();
         let req = json!({"jsonrpc": "2.0", "method": "frobnicate", "id": 7});
         let out = s.handle_message(&req.to_string());
         let v = parse_reply(&out);
@@ -560,7 +596,7 @@ mod tests {
 
     #[test]
     fn shutdown_then_non_exit_method_is_rejected() {
-        let mut s = Server::new();
+        let mut s = initialized_server();
         let _ =
             s.handle_message(&json!({"jsonrpc": "2.0", "method": "shutdown", "id": 1}).to_string());
         let out = s.handle_message(
@@ -574,7 +610,7 @@ mod tests {
 
     #[test]
     fn exit_after_shutdown_succeeds() {
-        let mut s = Server::new();
+        let mut s = initialized_server();
         let _ =
             s.handle_message(&json!({"jsonrpc": "2.0", "method": "shutdown", "id": 1}).to_string());
         let out = s.handle_message(&json!({"jsonrpc": "2.0", "method": "exit"}).to_string());
@@ -584,7 +620,7 @@ mod tests {
 
     #[test]
     fn did_open_records_document_and_publishes_diagnostics() {
-        let mut s = Server::new();
+        let mut s = initialized_server();
         let req = json!({
             "jsonrpc": "2.0",
             "method": "textDocument/didOpen",
@@ -613,7 +649,7 @@ mod tests {
 
     #[test]
     fn did_change_overwrites_text_and_re_publishes() {
-        let mut s = Server::new();
+        let mut s = initialized_server();
         let _ = s.handle_message(
             &json!({
                 "jsonrpc": "2.0",
@@ -644,7 +680,7 @@ mod tests {
 
     #[test]
     fn did_close_drops_document() {
-        let mut s = Server::new();
+        let mut s = initialized_server();
         let _ = s.handle_message(
             &json!({
                 "jsonrpc": "2.0",
@@ -668,7 +704,7 @@ mod tests {
 
     #[test]
     fn formatting_returns_text_edits() {
-        let mut s = Server::new();
+        let mut s = initialized_server();
         let _ = s.handle_message(
             &json!({
                 "jsonrpc": "2.0",
@@ -694,7 +730,7 @@ mod tests {
 
     #[test]
     fn formatting_unknown_uri_errors() {
-        let mut s = Server::new();
+        let mut s = initialized_server();
         let out = s.handle_message(
             &json!({
                 "jsonrpc": "2.0",
@@ -710,7 +746,7 @@ mod tests {
 
     #[test]
     fn hover_unknown_uri_errors() {
-        let mut s = Server::new();
+        let mut s = initialized_server();
         let out = s.handle_message(
             &json!({
                 "jsonrpc": "2.0",

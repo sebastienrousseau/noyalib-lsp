@@ -273,9 +273,9 @@ range that changed, not the buffer size.
 
 - **You want OpenAPI / AsyncAPI / Kubernetes-CRD hover docs out
   of the box.** That comes from the JSON Schema attached to
-  the buffer. noyalib-lsp doesn't ship a schema registry; you
-  point it at a schema explicitly via the
-  `yaml.schemas` (style) settings exposed by your editor.
+  the buffer. The current server reports parse diagnostics and
+  document-type hover only; schema mappings and schema descriptions
+  are not implemented.
 - **You need WebDAV-style multi-document operations
   (`workspace/applyEdit` for cross-file refactor).** Not
   implemented yet; tracked as a v0.1.x capability extension.

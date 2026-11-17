@@ -70,3 +70,33 @@ fn header_without_content_length_is_refused_and_the_server_continues() {
     assert!(stdout.contains("-32700"), "{stdout}");
     assert!(stdout.contains("\"capabilities\""), "{stdout}");
 }
+
+fn assert_header_name_is_accepted(name: &str) {
+    let mut input = format!("{name}: {}\r\n\r\n", INIT.len()).into_bytes();
+    input.extend_from_slice(INIT);
+    let (code, stdout) = drive(&input);
+    assert_eq!(code, Some(0), "stdout: {stdout}");
+    assert!(
+        stdout.contains("\"capabilities\""),
+        "initialize was not answered: {stdout}"
+    );
+    assert!(
+        !stdout.contains("-32700"),
+        "valid header was refused: {stdout}"
+    );
+}
+
+#[test]
+fn lowercase_content_length_initializes_the_actual_server() {
+    assert_header_name_is_accepted("content-length");
+}
+
+#[test]
+fn uppercase_content_length_initializes_the_actual_server() {
+    assert_header_name_is_accepted("CONTENT-LENGTH");
+}
+
+#[test]
+fn mixed_case_content_length_initializes_the_actual_server() {
+    assert_header_name_is_accepted("cOnTeNt-LeNgTh");
+}

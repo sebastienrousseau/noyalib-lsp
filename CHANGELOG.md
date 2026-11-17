@@ -11,6 +11,58 @@ and versions in lockstep with the
 [`noyalib`](https://github.com/sebastienrousseau/noyalib) core crate —
 see that repository's `CHANGELOG.md` for the release-wide notes.
 
+## [v0.0.62] - 2026-11-17
+
+v0.0.61 was never published: on 2026-11-15 the maintainer folded it into
+this release, in lockstep with the core, so the registry goes from
+v0.0.60 to v0.0.62. Every v0.0.61 change below ships here.
+
+### Changed
+
+- **Breaking:** the core refuses a byte order mark (U+FEFF) inside plain
+  and block scalars and comments, as YAML 1.2.2 requires; quoted scalars
+  and a document prefix keep it. The server reports such a document as a
+  parse diagnostic.
+- **Breaking:** error paths bracket sequence indices (`items[0].name`,
+  was `items.0.name`).
+- The exact core pin and the VS Code extension advance to 0.0.62.
+
+### Dependencies
+
+- GitHub Actions: the github-actions group's four pin updates (#118).
+- `@vscode/vsce` 4.1.0 for the extension was already folded from #115,
+  so #119 adds nothing further.
+
+## [v0.0.61] - Not published
+
+Folded into v0.0.62 (2026-11-15); there is no v0.0.61 tag or registry
+release.
+
+### Changed
+
+- Update the VS Code packager to VSCE 4.1.0, contributed by Dependabot
+  in #115; extension tests, VSIX packaging and npm audit pass.
+- Preserve unsigned radix string keys during serialization. Escalate CST
+  root shape changes to a full parse to preserve UTF-8 token boundaries.
+- Core parsing now preserves anchor declaration order and clips only a
+  final line break present in the input. These are breaking parse behavior
+  corrections under the family's patch-version policy.
+- Release dry runs guard signing and GitHub release creation. Version
+  checks include every tracked Cargo lock.
+- Prepare the next lockstep version for the ecosystem assurance work.
+  Release dates and completed changes are recorded after verification.
+
+### Fixed
+
+- Accept lower, upper and mixed-case `Content-Length` header names over
+  stdio, following LSP header semantics. Three actual-server regressions
+  reproduce the previous parse errors.
+- Honor UTF-16 hover positions and individual line boundaries.
+- Enforce initialization, ignore stale buffer changes, and exit promptly
+  with the protocol status. Reject oversized terminated headers.
+- Document the supported capability set and exercise it with Neovim.
+- Start the installed VS Code extension without an unsupported `--stdio` flag.
+
 ## [v0.0.60] - 2026-11-10
 
 ### Changed

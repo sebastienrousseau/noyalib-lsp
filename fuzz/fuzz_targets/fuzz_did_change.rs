@@ -34,6 +34,7 @@ fuzz_target!(|data: &[u8]| {
     };
     let text = json_escape(s);
     let mut server = Server::new();
+    let _ = server.handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#);
 
     let open = format!(
         r#"{{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{{"textDocument":{{"uri":"file:///f.yaml","languageId":"yaml","version":1,"text":"{text}"}}}}}}"#

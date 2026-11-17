@@ -18,5 +18,6 @@ fuzz_target!(|data: &[u8]| {
         return;
     };
     let mut server = Server::new();
+    let _ = server.handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#);
     let _ = server.handle_message(raw);
 });

@@ -226,3 +226,103 @@ fn ultra_complex_fixture_opens_clean() {
         note["params"]["diagnostics"]
     );
 }
+
+#[test]
+fn requests_before_initialize_are_refused_without_opening_buffers() {
+    let replies = round_trip(&[
+        json!({"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": {
+            "textDocument": {"uri": "file:///preinit.yaml", "text": "a: 1\n", "version": 1}
+        }}),
+        json!({"jsonrpc": "2.0", "id": 1, "method": "textDocument/hover", "params": {
+            "textDocument": {"uri": "file:///preinit.yaml"}, "position": {"line": 0, "character": 0}
+        }}),
+        json!({"jsonrpc": "2.0", "id": 2, "method": "initialize", "params": {}}),
+        json!({"jsonrpc": "2.0", "id": 3, "method": "textDocument/hover", "params": {
+            "textDocument": {"uri": "file:///preinit.yaml"}, "position": {"line": 0, "character": 0}
+        }}),
+    ]);
+    assert_eq!(
+        replies.len(),
+        3,
+        "pre-initialize notification must be silent"
+    );
+    assert_eq!(replies[0]["error"]["code"], -32002);
+    assert_eq!(replies[2]["error"]["code"], -32602);
+}
+
+#[test]
+fn stale_changes_do_not_replace_the_latest_buffer_or_publish_errors() {
+    let uri = "file:///versioned.yaml";
+    let replies = round_trip(&[
+        json!({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}),
+        json!({"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": {
+            "textDocument": {"uri": uri, "text": "a: 1\n", "version": 1}
+        }}),
+        json!({"jsonrpc": "2.0", "method": "textDocument/didChange", "params": {
+            "textDocument": {"uri": uri, "version": 3}, "contentChanges": [{"text": "a: 2\n"}]
+        }}),
+        json!({"jsonrpc": "2.0", "method": "textDocument/didChange", "params": {
+            "textDocument": {"uri": uri, "version": 2}, "contentChanges": [{"text": "a: [\n"}]
+        }}),
+        json!({"jsonrpc": "2.0", "id": 2, "method": "textDocument/hover", "params": {
+            "textDocument": {"uri": uri}, "position": {"line": 0, "character": 0}
+        }}),
+    ]);
+    let diagnostics = replies
+        .iter()
+        .filter(|v| v["method"] == "textDocument/publishDiagnostics")
+        .count();
+    assert_eq!(diagnostics, 2, "stale change must not publish diagnostics");
+    let hover = replies.last().unwrap()["result"]["contents"]["value"]
+        .as_str()
+        .unwrap();
+    assert!(hover.contains("mapping"), "{hover}");
+}
+
+#[test]
+fn exit_notification_terminates_even_if_client_keeps_stdin_open() {
+    use std::time::{Duration, Instant};
+    for (shutdown, expected) in [(false, 1), (true, 0)] {
+        let mut child = Command::new(bin())
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .spawn()
+            .unwrap();
+        let mut input = child.stdin.take().unwrap();
+        if shutdown {
+            input
+                .write_all(&frame(
+                    &json!({"jsonrpc": "2.0", "id": 1, "method": "initialize"}),
+                ))
+                .unwrap();
+            input
+                .write_all(&frame(
+                    &json!({"jsonrpc": "2.0", "id": 2, "method": "shutdown"}),
+                ))
+                .unwrap();
+        }
+        input
+            .write_all(&frame(&json!({"jsonrpc": "2.0", "method": "exit"})))
+            .unwrap();
+        let deadline = Instant::now() + Duration::from_secs(3);
+        let status = loop {
+            if let Some(status) = child.try_wait().unwrap() {
+                break Some(status);
+            }
+            if Instant::now() >= deadline {
+                break None;
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        };
+        drop(input);
+        if status.is_none() {
+            let _ = child.kill();
+            let _ = child.wait();
+        }
+        assert_eq!(
+            status.and_then(|s| s.code()),
+            Some(expected),
+            "shutdown={shutdown}"
+        );
+    }
+}
