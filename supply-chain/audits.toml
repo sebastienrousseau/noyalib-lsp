@@ -228,6 +228,12 @@ criteria = "safe-to-deploy"
 delta = "0.0.61 -> 0.0.62"
 notes = "Lockstep release metadata (crate version, exact core pin, VS Code extension version) plus one unit test under #[cfg(test)] in src/diagnostics.rs; no runtime source changes. Behaviour changes come from the core and are reviewed with it."
 
+[[audits.noyalib-lsp]]
+who = "Claude Code"
+criteria = "safe-to-deploy"
+delta = "0.0.62 -> 0.0.63"
+notes = "Lockstep release metadata only: crate version, exact core pin =0.0.63, CITATION, README, policy note and VS Code extension version. No Rust source changes. The core change (CST insert_entry_value double-quotes multi-line strings the parser refuses as a block) is reviewed with the core."
+
 [[audits.num]]
 who = "Sebastien Rousseau <sebastian.rousseau@gmail.com>"
 criteria = "safe-to-deploy"
