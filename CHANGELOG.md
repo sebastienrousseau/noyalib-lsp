@@ -11,6 +11,25 @@ and versions in lockstep with the
 [`noyalib`](https://github.com/sebastienrousseau/noyalib) core crate —
 see that repository's `CHANGELOG.md` for the release-wide notes.
 
+## [v0.0.63] - 2026-11-20
+
+### Changed
+
+- The exact core pin and the VS Code extension advance to 0.0.63. The
+  core's only user-visible change is in `cst::Document::insert_entry_value`
+  (a multi-line string holding a C1 control other than NEL, U+FFFE, U+FFFF
+  or a BOM is now double-quoted rather than written as a `|` block the
+  parser refuses). The server does not call that API, so its behaviour is
+  unchanged.
+
+### Dependencies
+
+- GitHub Actions: the github-actions group's 18 pin updates (#121),
+  including `taiki-e/install-action` 2.90.3; the shared core workflows
+  run from the v0.0.62 release commit.
+- cargo-vet records the core 0.0.62 -> 0.0.63 delta
+  (`supply-chain/reviews/v0.0.63.md`).
+
 ## [v0.0.62] - 2026-11-17
 
 v0.0.61 was never published: on 2026-11-15 the maintainer folded it into
